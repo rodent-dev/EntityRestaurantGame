@@ -1,0 +1,25 @@
+﻿{
+    "itemId":  "kitchen_knife",
+    "itemName":  "Kitchen Knife",
+    "description":  "A well-worn chef\u0027s knife. Reliable in a fight or a kitchen.",
+    "type":  "Weapon",
+    "weight":  0.5,
+    "uses":  -1,
+    "enablesActions":  [
+                           "Attack",
+                           "Defend"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Damage",
+                        "trigger":  "Attack",
+                        "parameters":  {
+                                           "amount":  10.0
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Craft":  0.5,
+                        "Harm":  0.6
+                    }
+}

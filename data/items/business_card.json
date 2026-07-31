@@ -1,0 +1,30 @@
+﻿{
+    "itemId":  "business_card",
+    "itemName":  "Business Card",
+    "description":  "Embossed lettering. A small formality that opens doors.",
+    "type":  "Merit",
+    "weight":  0.0,
+    "uses":  5,
+    "enablesActions":  [
+                           "Speak"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Relationship",
+                        "trigger":  "Speak",
+                        "parameters":  {
+                                           "amount":  5.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Speak",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Commerce":  0.5
+                    }
+}

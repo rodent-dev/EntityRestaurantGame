@@ -1,0 +1,38 @@
+﻿{
+    "itemId":  "bread_loaf",
+    "itemName":  "Bread Loaf",
+    "description":  "Fresh from the oven. Restores morale and health.",
+    "type":  "Consumable",
+    "weight":  0.4,
+    "uses":  3,
+    "enablesActions":  [
+                           "Consume"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Heal",
+                        "trigger":  "Consume",
+                        "parameters":  {
+                                           "amount":  15.0
+                                       }
+                    },
+                    {
+                        "type":  "Feed",
+                        "trigger":  "Consume",
+                        "parameters":  {
+                                           "amount":  25.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Consume",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Comfort":  0.2,
+                        "Nourishment":  0.5
+                    }
+}

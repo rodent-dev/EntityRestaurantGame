@@ -1,0 +1,24 @@
+﻿{
+  "type": "Wolf",
+  "faction": "predators",
+  "habitat": "wilds",
+  "perSettlement": [0, 1],
+  "behaviors": [
+    { "name": "Predatory", "keywords": ["Aggressive", "Offensive", "Greedy"], "affect": [3, 5] },
+    { "name": "Skittish",  "keywords": ["SelfPreserving", "Reactive"],        "affect": [2, 4] }
+  ],
+  "actions": ["Attack", "Defend", "Consume", "Idle"],
+  "mind": {
+    "preferences": { "Nourishment": [4, 7], "Safety": [2, 4] },
+    "skepticism": [0.7, 0.9],
+    "sociability": [0.1, 0.3],
+    "impulsiveness": [0.5, 0.9]
+  },
+  "selfDescriptors": { "Harm": [0.4, 0.6], "Comfort": [-0.4, -0.2] },
+  "stats": { "strength": [10, 14], "agility": [12, 16], "constitution": [8, 12] },
+  "inventory": {
+    "always": ["fangs", "raw_meat"],
+    "pickCount": [0, 1],
+    "pool": ["raw_meat"]
+  }
+}

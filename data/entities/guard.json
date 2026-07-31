@@ -1,0 +1,21 @@
+{
+  "id": "guard",
+  "displayName": "Sera",
+  "entityType": "Guard",
+  "position": [12, 14, 0],
+  "inventory": ["fist", "rolling_pin", "coffee_cup", "blessing_herb"],
+  "behaviors": [
+    { "name": "Vigilance",  "keywords": ["Defensive", "Reactive"],       "affect": 4 },
+    { "name": "Aggression", "keywords": ["Aggressive", "Violent"],       "affect": 2 },
+    { "name": "Protective", "keywords": ["Supportive", "Social"],        "affect": 3 },
+    { "name": "Resilience", "keywords": ["SelfPreserving", "Greedy"],    "affect": 2 }
+  ],
+  "actions": ["Attack", "Defend", "Grapple", "Consume", "Enchant", "Converse", "Idle"],
+  "mind": {
+    "preferences": { "Safety": 6, "Craft": 3, "Nourishment": 3, "Comfort": 2 },
+    "skepticism": 0.7,
+    "impulsiveness": 0.1
+  },
+  "selfDescriptors": { "Safety": 0.5 },
+  "stats": { "constitution": 14 }
+}

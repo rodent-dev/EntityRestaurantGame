@@ -1,0 +1,31 @@
+﻿{
+    "itemId":  "bouquet",
+    "itemName":  "Bouquet of Flowers",
+    "description":  "A generous arrangement. Hard to stay angry at someone holding these.",
+    "type":  "Merit",
+    "weight":  0.3,
+    "uses":  1,
+    "enablesActions":  [
+                           "Speak"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Relationship",
+                        "trigger":  "Speak",
+                        "parameters":  {
+                                           "amount":  20.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Speak",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Beauty":  0.7,
+                        "Comfort":  0.2
+                    }
+}

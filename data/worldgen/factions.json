@@ -1,0 +1,6 @@
+{
+  "settlers":  { "settlers": [1, 6],   "bandits": [-9, -5], "predators": [-5, -2], "wildlife": [-2, 0] },
+  "bandits":   { "settlers": [-6, -3], "bandits": [0, 5],   "predators": [-5, -2], "wildlife": [-3, 0] },
+  "predators": { "settlers": [-4, -1], "bandits": [-4, -1], "predators": [0, 2],   "wildlife": [-9, -5] },
+  "wildlife":  { "settlers": [-3, 0],  "bandits": [-3, 0],  "predators": [-9, -6], "wildlife": [0, 3] }
+}

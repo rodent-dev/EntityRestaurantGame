@@ -1,0 +1,15 @@
+{
+  "id": "drifter",
+  "displayName": "Drifter",
+  "entityType": "Nobody",
+  "position": [10, 18, 0],
+  "inventory": ["fist", "bread_loaf"],
+  "behaviors": [
+    { "name": "Wary", "keywords": ["SelfPreserving", "Reactive"], "affect": 3 }
+  ],
+  "actions": ["Attack", "Defend", "Consume", "Converse", "Idle"],
+  "mind": {
+    "preferences": { "Nourishment": 5, "Safety": 4, "Comfort": 2 },
+    "impulsiveness": 0.4
+  }
+}

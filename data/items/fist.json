@@ -1,0 +1,26 @@
+﻿{
+  "itemId": "fist",
+  "itemName": "Fist",
+  "description": "A bare-knuckled fist.",
+  "type": "Weapon",
+  "weight": 0.0,
+  "uses": -1,
+  "enablesActions": ["Attack", "Defend", "Grapple"],
+  "effects": [
+    {
+      "type": "Damage",
+      "trigger": "Attack",
+      "parameters": { "amount": 5.0 }
+    },
+    {
+      "type": "Damage",
+      "trigger": "Grapple",
+      "parameters": { "amount": 2.0 }
+    },
+    {
+      "type": "Relationship",
+      "trigger": "Grapple",
+      "parameters": { "amount": -2.0 }
+    }
+  ]
+}

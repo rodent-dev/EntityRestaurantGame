@@ -1,0 +1,39 @@
+﻿{
+    "itemId":  "hex_token",
+    "itemName":  "Hex Token",
+    "description":  "A carved bone disc. Unsettles whoever it is aimed at.",
+    "type":  "Standard",
+    "weight":  0.1,
+    "uses":  3,
+    "enablesActions":  [
+                           "Enchant"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Relationship",
+                        "trigger":  "Enchant",
+                        "parameters":  {
+                                           "amount":  -18.0
+                                       }
+                    },
+                    {
+                        "type":  "Damage",
+                        "trigger":  "Enchant",
+                        "parameters":  {
+                                           "amount":  3.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Enchant",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Commerce":  0.3,
+                        "Craft":  0.4,
+                        "Harm":  0.5
+                    }
+}

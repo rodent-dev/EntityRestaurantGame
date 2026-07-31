@@ -1,0 +1,17 @@
+{
+  "itemId": "fangs",
+  "itemName": "Fangs",
+  "description": "Nature's own armament.",
+  "type": "Weapon",
+  "weight": 0.0,
+  "uses": -1,
+  "enablesActions": ["Attack", "Defend"],
+  "descriptors": { "Harm": 0.4 },
+  "effects": [
+    {
+      "type": "Damage",
+      "trigger": "Attack",
+      "parameters": { "amount": 9.0 }
+    }
+  ]
+}

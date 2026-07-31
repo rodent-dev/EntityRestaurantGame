@@ -1,0 +1,31 @@
+[
+  {
+    "name": "tavern",
+    "locations": [
+      { "tag": "tavern",      "min": [0, 0, 0], "max": [20, 20, 0.99] },
+      { "tag": "kitchen",     "min": [0, 0, 0], "max": [8, 7, 0.99] },
+      { "tag": "common_room", "min": [0, 7, 0], "max": [20, 20, 0.99] },
+      { "tag": "wilds",       "min": [-12, -10, 0], "max": [32, 30, 0.99] }
+    ]
+  },
+  {
+    "name": "roadhouse",
+    "locations": [
+      { "tag": "roadhouse", "min": [0, 0, 0],  "max": [22, 16, 0.99] },
+      { "tag": "kitchen",   "min": [14, 0, 0], "max": [22, 6, 0.99] },
+      { "tag": "bunkroom",  "min": [0, 0, 0],  "max": [8, 6, 0.99] },
+      { "tag": "taproom",   "min": [0, 6, 0],  "max": [22, 16, 0.99] },
+      { "tag": "wilds",     "min": [-11, -12, 0], "max": [33, 28, 0.99] }
+    ]
+  },
+  {
+    "name": "market_hall",
+    "locations": [
+      { "tag": "market_hall", "min": [0, 0, 0],  "max": [24, 18, 0.99] },
+      { "tag": "stalls",      "min": [0, 0, 0],  "max": [24, 10, 0.99] },
+      { "tag": "cookfires",   "min": [0, 10, 0], "max": [10, 18, 0.99] },
+      { "tag": "yard",        "min": [10, 10, 0], "max": [24, 18, 0.99] },
+      { "tag": "wilds",       "min": [-10, -11, 0], "max": [34, 29, 0.99] }
+    ]
+  }
+]

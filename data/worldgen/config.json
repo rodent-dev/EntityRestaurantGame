@@ -1,0 +1,6 @@
+{
+  "seed": null,
+  "regionCount": 3,
+  "regionSize": [60, 60],
+  "settlementsPerRegion": [2, 4]
+}

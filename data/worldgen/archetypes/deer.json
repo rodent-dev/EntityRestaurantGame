@@ -1,0 +1,30 @@
+﻿{
+  "type": "Deer",
+  "faction": "wildlife",
+  "habitat": "wilds",
+  "perSettlement": [1, 3],
+  "behaviors": [
+    { "name": "Timid",  "keywords": ["SelfPreserving", "Reactive", "Defensive"], "affect": [3, 5] },
+    { "name": "Grazer", "keywords": ["Greedy"],                                  "affect": [2, 4] }
+  ],
+  "actions": ["Defend", "Consume", "Idle"],
+  "work": {
+    "location": ["wilds"],
+    "produces": ["raw_meat"],
+    "maxStock": 3,
+    "keywords": ["Greedy"]
+  },
+  "mind": {
+    "preferences": { "Safety": [5, 8], "Nourishment": [3, 5] },
+    "skepticism": [0.8, 0.95],
+    "sociability": [0.05, 0.2],
+    "impulsiveness": [0.1, 0.4]
+  },
+  "selfDescriptors": { "Beauty": [0.2, 0.4], "Nourishment": [0.3, 0.5] },
+  "stats": { "agility": [12, 16], "constitution": [7, 11] },
+  "inventory": {
+    "always": ["hooves", "raw_meat", "raw_meat"],
+    "pickCount": [0, 0],
+    "pool": []
+  }
+}

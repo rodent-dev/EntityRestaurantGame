@@ -1,0 +1,24 @@
+﻿{
+  "type": "Bear",
+  "faction": "predators",
+  "habitat": "wilds",
+  "perSettlement": [0, 1],
+  "behaviors": [
+    { "name": "Territorial", "keywords": ["Aggressive", "Violent", "Defensive"], "affect": [2, 4] },
+    { "name": "Forager",     "keywords": ["Greedy", "SelfPreserving"],           "affect": [2, 4] }
+  ],
+  "actions": ["Attack", "Defend", "Consume", "Idle"],
+  "mind": {
+    "preferences": { "Nourishment": [5, 8], "Safety": [3, 5] },
+    "skepticism": [0.8, 0.95],
+    "sociability": [0.05, 0.15],
+    "impulsiveness": [0.3, 0.6]
+  },
+  "selfDescriptors": { "Harm": [0.5, 0.8], "Comfort": [-0.6, -0.3] },
+  "stats": { "strength": [15, 19], "constitution": [14, 18], "agility": [6, 9] },
+  "inventory": {
+    "always": ["fangs", "raw_meat", "raw_meat"],
+    "pickCount": [0, 0],
+    "pool": []
+  }
+}

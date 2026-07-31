@@ -1,0 +1,131 @@
+# EntityARestaurantGame — .NET 10 / C# 10, Windows-first, Silk.NET
+#
+# NOTE: the stock VisualStudio.gitignore contains `*.obj` (C++ object files).
+# We deliberately DO NOT use it — `data/models/*.obj` are Wavefront model
+# assets and must stay tracked. Only directory-form `[Oo]bj/` is ignored.
+
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+[Ll]og/
+[Ll]ogs/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+artifacts/
+
+# ---------------------------------------------------------------------------
+# Visual Studio / Rider / VS Code
+# ---------------------------------------------------------------------------
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.sln.docstates
+*.sln.iml
+*.csproj.user
+*.dbmdl
+*.jfm
+
+# ---------------------------------------------------------------------------
+# MSBuild / restore
+# ---------------------------------------------------------------------------
+*.binlog
+msbuild.log
+msbuild.err
+msbuild.wrn
+*.tlog
+project.lock.json
+project.fragment.lock.json
+.packages/
+packages/
+!**/packages/build/
+*.nupkg
+*.snupkg
+.nuget.props
+.nuget.targets
+
+# ---------------------------------------------------------------------------
+# Test / profiling / coverage
+# ---------------------------------------------------------------------------
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+*.psess
+*.vsp
+*.vspx
+*.dotCover
+
+# ---------------------------------------------------------------------------
+# Publish
+# ---------------------------------------------------------------------------
+publish/
+[Pp]ublish[Ss]cripts/
+*.publishsettings
+*.azurePubxml
+*.pubxml
+*.pubxml.user
+
+# ---------------------------------------------------------------------------
+# Crash / diagnostic dumps
+# ---------------------------------------------------------------------------
+*.dmp
+*.mdmp
+*.stackdump
+crash.log
+
+# ---------------------------------------------------------------------------
+# Game-run artifacts
+#   `--3d --smoke` writes smoke.bmp next to the binary (AppDomain.BaseDirectory,
+#   see Render3DHost.cs), so bin/ already covers it — pinned here in case the
+#   output path ever moves to the working directory.
+# ---------------------------------------------------------------------------
+smoke.bmp
+smoke*.bmp
+*.log
+
+# ---------------------------------------------------------------------------
+# Local tooling config (shared config stays tracked)
+# ---------------------------------------------------------------------------
+.claude/settings.local.json
+CLAUDE.local.md
+
+# ---------------------------------------------------------------------------
+# OS noise
+# ---------------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*~
+*.swp
+
+# ---------------------------------------------------------------------------
+# Content guards — data/ is game content, never build output.
+# These negations are defensive: if a broad pattern is ever added above,
+# the asset pipeline keeps working.
+# ---------------------------------------------------------------------------
+!data/**
+!data/models/*.obj
+!data/shaders/*.vert
+!data/shaders/*.frag
+!data/ui/*.png
+!data/fonts/**

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Engine.Items\Engine.Items.csproj" />
+    <ProjectReference Include="..\Engine.Spatial\Engine.Spatial.csproj" />
+    <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
+  </ItemGroup>
+</Project>

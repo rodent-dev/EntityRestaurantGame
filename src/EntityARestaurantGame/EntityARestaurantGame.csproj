@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Engine.Items\Engine.Items.csproj" />
+    <ProjectReference Include="..\Engine.Spatial\Engine.Spatial.csproj" />
+    <ProjectReference Include="..\Engine.Ticks\Engine.Ticks.csproj" />
+    <ProjectReference Include="..\Game.Contracts\Game.Contracts.csproj" />
+    <ProjectReference Include="..\Game.Services\Game.Services.csproj" />
+    <ProjectReference Include="..\Engine.Render\Engine.Render.csproj" />
+    <ProjectReference Include="..\Engine.Input\Engine.Input.csproj" />
+    <ProjectReference Include="..\Engine.Ui\Engine.Ui.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Item data lives at the repo root; link it into the output folder. -->
+    <None Include="..\..\data\items\*.json" Link="data\items\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\shaders\*.*" Link="data\shaders\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\input\*.json" Link="data\input\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\models\*.obj" Link="data\models\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\ui\*.*" Link="data\ui\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\fonts\*.ttf" Link="data\fonts\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\world\*.json" Link="data\world\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\entities\**\*.json" Link="data\entities\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\data\worldgen\**\*.json" Link="data\worldgen\%(RecursiveDir)%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

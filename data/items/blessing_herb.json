@@ -1,0 +1,39 @@
+﻿{
+    "itemId":  "blessing_herb",
+    "itemName":  "Blessing Herb",
+    "description":  "A dried sprig with a faint glow. Bolsters an ally\u0027s resolve.",
+    "type":  "Merit",
+    "weight":  0.1,
+    "uses":  1,
+    "enablesActions":  [
+                           "Enchant"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Relationship",
+                        "trigger":  "Enchant",
+                        "parameters":  {
+                                           "amount":  12.0
+                                       }
+                    },
+                    {
+                        "type":  "Heal",
+                        "trigger":  "Enchant",
+                        "parameters":  {
+                                           "amount":  8.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Enchant",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Commerce":  0.2,
+                        "Craft":  0.3,
+                        "Safety":  0.5
+                    }
+}

@@ -1,0 +1,30 @@
+﻿{
+  "type": "Cook",
+  "perSettlement": [1, 1],
+  "behaviors": [
+    { "name": "Diligence",     "keywords": ["Supportive", "Reactive", "Industrious"], "affect": [2, 4] },
+    { "name": "Craftsmanship", "keywords": ["Industrious", "Pride"],                  "affect": [2, 4] },
+    { "name": "Temper",        "keywords": ["Aggressive", "Reactive"],                "affect": [1, 3] },
+    { "name": "Appetite",      "keywords": ["Greedy"],                                "affect": [1, 2] }
+  ],
+  "actions": ["Attack", "Defend", "Consume", "Enchant", "Converse", "Idle"],
+  "work": {
+    "location": ["kitchen", "cookfires"],
+    "produces": ["bread_loaf", "steak"],
+    "maxStock": 6,
+    "keywords": ["Industrious", "Pride", "Greedy"]
+  },
+  "mind": {
+    "preferences": { "Craft": [4, 7], "Nourishment": [3, 5], "Comfort": [1, 3] },
+    "skepticism": [0.3, 0.7],
+    "sociability": [0.2, 0.6],
+    "impulsiveness": [0.2, 0.6]
+  },
+  "selfDescriptors": { "Craft": [0.3, 0.7] },
+  "stats": { "strength": [8, 13], "constitution": [9, 14] },
+  "inventory": {
+    "always": ["fist", "kitchen_knife"],
+    "pickCount": [1, 2],
+    "pool": ["bread_loaf", "steak", "rolling_pin", "coffee_cup"]
+  }
+}

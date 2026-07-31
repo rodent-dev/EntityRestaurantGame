@@ -1,0 +1,6 @@
+{
+  "regions": ["Ashvale", "Briarmoor", "Cindermarch", "Duskfen", "Emberwild", "Foxglove Reach"],
+  "settlementPrefixes": ["Salt", "Iron", "Bram", "Wolf", "Ash", "Fen", "Crow", "Elder", "Mill", "Thorn", "Oat", "Kiln"],
+  "settlementSuffixes": ["stead", "hollow", "ford", "market", "rest", "gate", "barrow", "wick"],
+  "firstNames": ["Aldric", "Sera", "Finn", "Maren", "Oswin", "Petra", "Rowan", "Talla", "Ulric", "Vesna", "Wren", "Yorick", "Ida", "Garrick", "Nell", "Baswin", "Odele", "Corvin", "Hesper", "Jorun"]
+}

@@ -1,0 +1,27 @@
+{
+  "itemId": "raw_meat",
+  "itemName": "Raw Meat",
+  "description": "A fresh cut, still warm.",
+  "type": "Consumable",
+  "weight": 1.5,
+  "uses": 1,
+  "enablesActions": ["Consume"],
+  "descriptors": { "Nourishment": 0.5 },
+  "effects": [
+    {
+      "type": "Feed",
+      "trigger": "Consume",
+      "parameters": { "amount": 30.0 }
+    },
+    {
+      "type": "Heal",
+      "trigger": "Consume",
+      "parameters": { "amount": 5.0 }
+    },
+    {
+      "type": "ConsumeItem",
+      "trigger": "Consume",
+      "parameters": {}
+    }
+  ]
+}

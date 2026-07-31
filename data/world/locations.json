@@ -1,0 +1,5 @@
+[
+  { "tag": "restaurant",   "min": [0, 0, 0], "max": [20, 20, 0.99] },
+  { "tag": "kitchen",      "min": [0, 0, 0], "max": [10, 8, 0.99] },
+  { "tag": "dining_floor", "min": [0, 8, 0], "max": [20, 20, 0.99] }
+]

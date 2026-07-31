@@ -1,0 +1,38 @@
+﻿{
+    "itemId":  "coffee_cup",
+    "itemName":  "Cup of Coffee",
+    "description":  "Hot and bitter. Gets you back on your feet.",
+    "type":  "Consumable",
+    "weight":  0.2,
+    "uses":  1,
+    "enablesActions":  [
+                           "Consume"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Heal",
+                        "trigger":  "Consume",
+                        "parameters":  {
+                                           "amount":  12.0
+                                       }
+                    },
+                    {
+                        "type":  "Feed",
+                        "trigger":  "Consume",
+                        "parameters":  {
+                                           "amount":  10.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Consume",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Comfort":  0.4,
+                        "Nourishment":  0.2
+                    }
+}

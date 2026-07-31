@@ -1,0 +1,24 @@
+﻿{
+  "type": "Patron",
+  "perSettlement": [2, 3],
+  "behaviors": [
+    { "name": "Appetite",     "keywords": ["Greedy"],                    "affect": [2, 4] },
+    { "name": "Conviviality", "keywords": ["Social", "Diplomatic"],      "affect": [1, 4] },
+    { "name": "Wariness",     "keywords": ["SelfPreserving", "Reactive"], "affect": [1, 3] },
+    { "name": "Bluster",      "keywords": ["Aggressive", "Violent"],     "affect": [0, 3] }
+  ],
+  "actions": ["Attack", "Defend", "Consume", "Converse", "Idle"],
+  "mind": {
+    "preferences": { "Nourishment": [3, 6], "Comfort": [2, 5], "Glory": [0, 4], "Safety": [1, 4] },
+    "skepticism": [0.2, 0.7],
+    "sociability": [0.3, 0.8],
+    "impulsiveness": [0.2, 0.8]
+  },
+  "selfDescriptors": { "Comfort": [0.1, 0.4] },
+  "stats": { "strength": [8, 14], "constitution": [8, 13], "wisdom": [6, 12] },
+  "inventory": {
+    "always": ["fist", "coin", "coin", "coin"],
+    "pickCount": [1, 2],
+    "pool": ["bread_loaf", "coffee_cup", "wine_bottle", "broken_bottle"]
+  }
+}

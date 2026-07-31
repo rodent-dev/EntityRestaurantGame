@@ -1,0 +1,97 @@
+# Repository Architecture
+
+Layering follows the API-style philosophy: **Contracts hold object identities,
+Services control objects (fetching, building, mutating), Controllers handle the
+API — the reachable combinations of services.**
+
+```
+src/
+├── Engine.Ticks/          # GENERIC — timer substrate (Clock, Wheel, SimLoop, IEvent)
+├── Engine.Items/          # GENERIC — item pipeline (IItem<TActor>, ItemDefinition,
+│                          #   ItemFactory<TActor>, EffectRegistry<TActor>, DataDrivenItem<TActor>)
+├── Engine.Spatial/        # GENERIC — AABB locations (Location, LocationRegistry)
+├── Engine.Render/         # GENERIC — Silk.NET OpenGL shell (GameWindow, Shader,
+│                          #   GpuMesh, Primitives, ObjLoader, OrbitCamera,
+│                          #   RenderTarget, Screenshot)
+├── Engine.Input/          # GENERIC — action-mapped input (BindingSet<TAction>,
+│                          #   InputState<TAction>, SilkInputAdapter<TAction>)
+├── Engine.Ui/             # GENERIC — 2D scene controller (Scene, SceneAction,
+│                          #   SceneManager, UiContext, UiInput, MenuList);
+│                          #   references Engine.Render only
+│
+├── Game.Contracts/        # IDENTITIES — Entity, EntityNeeds, BehaviorModule, IAction,
+│                          #   ActionCandidate, Influence, DecisionRecord, GameSignal
+├── Game.Services/         # HOW — EntityService (candidates, weights, selection, needs,
+│                          #   mood fallout, movement), StatusWeightCalculator,
+│                          #   standard Actions/ and item Effects/
+└── EntityARestaurantGame/ # THE GAME — Program (composition root), EntityController
+                           #   (WHEN: owns clock/wheel/rosters/signal log),
+                           #   Simulation/ (tick events), UI/ (console screens),
+                           #   Render3D/ (Render3DHost — the 3D composition point),
+                           #   Scenes/ (2D interface scenes: pause, settings, …)
+tools/SmokeTest/           # headless harness driving the controller without the UI
+data/items/                # item JSON, linked into the game's output at build
+data/shaders/              # GLSL (basic.vert/frag), linked into output at build
+data/input/                # bindings.json — action-to-device control bindings
+data/models/               # Wavefront OBJ assets (pyramid.obj)
+data/ui/                   # menu background images (any PNG/JPG/BMP/TGA)
+data/fonts/                # drop-in .ttf overrides the game font (system serif fallback)
+specs/                     # design docs (docs-6-11 = tick/event/world/speech designs)
+old/                       # archived snapshots (incl. pre-reorg-2026-06-11)
+```
+
+## Dependency rules (compiler-enforced via project references)
+
+- `Engine.*` reference **nothing** — they are reusable in any project.
+- `Engine.Items` is generic over `TActor`; it never inspects the actor, only
+  routes it to effects. The game closes the generic with
+  `global using IItem = Engine.Items.IItem<Game.Contracts.Entity>;` (see each
+  project's `GlobalUsings.cs`), so call sites read as plain `IItem`.
+- `Game.Contracts` references only `Engine.Items` (inventory/action signatures).
+  No logic beyond trivial self-mutators (`TakeDamage`, `Feed`, `AdjustMood`).
+- `Game.Services` references Contracts + the engines it operates with.
+  `EntityService` knows **how** to do everything to an entity; it holds no
+  game state of its own (only randomness + world geometry).
+- `EntityARestaurantGame` is the composition root: builds the world, owns time
+  (the controller schedules events; events call back into the controller, which
+  delegates to services), and renders. **Custom items, custom effects, and
+  game-specific logic belong here or in Game.Services — never in Engine.***
+
+## Controller vs. Service in one sentence
+
+`EntityController` decides **when** (decision beats, hunger pulses, death
+sweeps, what gets announced); `EntityService` knows **how** (build candidates,
+weigh them, move a pawn, decay hunger). UI talks only to the controller.
+
+## Rendering boundary (3D)
+
+Sim truth is renderer-free by rule. The rudimentary Silk.NET pipeline exists:
+`Engine.Render` + `Engine.Input` are generic (reference no game code);
+`Render3DHost` in the game project is the composition point — it drives the
+sim clock via `EntityController.Pump(dt)` and only ever **reads** sim truth
+(positions, entity types). Sim axes are X=left/right, Y=front/back,
+Z=floor-layer; render axes are X=right, Y=up, Z=toward-camera, so
+`renderPos = (sim.X, sim.Z, sim.Y)`.
+
+Run it with `dotnet run --project src\EntityARestaurantGame -- --3d`
+(add `--smoke` to auto-close after 3s and dump a `smoke.bmp` screenshot).
+Controls live in `data/input/bindings.json`: WASD pans, right-drag orbits,
+scroll zooms, Escape opens the pause menu. The scene renders into a 480×270
+offscreen target and upscales with nearest filtering (deliberate PS2-era
+look). The console WorldScreen ASCII map remains as a debug view of the same
+sim truth.
+
+## 2D interface (Engine.Ui)
+
+The windowed counterpart of the console screen stack — see
+`specs/UI_2D_Interface_Plan.md` for the full component inventory and build
+order. `SceneManager` holds a stack of `Scene`s above the 3D world; the top
+scene gets a device-free `UiInput`, returns a `SceneAction`
+(Stay/Pop/Push/Replace/Quit), and while any sim-blocking scene is on the
+stack the host stops pumping the sim (the console `IRealtimeScreen` trick).
+UI draws into the same 480×270 target as the world, so it inherits the
+upscale. Text is a TTF baked to a glyph atlas at load (`SpriteFont`, via
+StbTrueTypeSharp); menu backgrounds are plain image files in `data/ui/`
+loaded through `Texture2D` (StbImageSharp). **Regions/settlements/world-map
+views are NOT scenes in this controller** — they get their own controller
+(project decision, 2026-07-16).

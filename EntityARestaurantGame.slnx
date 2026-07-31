@@ -1,0 +1,13 @@
+<Solution>
+  <Project Path="src/Engine.Ticks/Engine.Ticks.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/Engine.Input/Engine.Input.csproj" />
+    <Project Path="src/Engine.Render/Engine.Render.csproj" />
+  </Folder>
+  <Project Path="src/Engine.Items/Engine.Items.csproj" />
+  <Project Path="src/Engine.Spatial/Engine.Spatial.csproj" />
+  <Project Path="src/Game.Contracts/Game.Contracts.csproj" />
+  <Project Path="src/Game.Services/Game.Services.csproj" />
+  <Project Path="src/EntityARestaurantGame/EntityARestaurantGame.csproj" />
+  <Project Path="tools/SmokeTest/SmokeTest.csproj" />
+</Solution>

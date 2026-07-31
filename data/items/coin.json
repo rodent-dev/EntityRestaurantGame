@@ -1,0 +1,11 @@
+{
+  "itemId": "coin",
+  "itemName": "Coin",
+  "description": "A worn silver piece.",
+  "type": "Currency",
+  "weight": 0.01,
+  "uses": -1,
+  "enablesActions": [],
+  "descriptors": { "Commerce": 0.6 },
+  "effects": []
+}

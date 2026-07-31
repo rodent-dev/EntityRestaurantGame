@@ -1,0 +1,24 @@
+﻿{
+    "itemId":  "rolling_pin",
+    "itemName":  "Rolling Pin",
+    "description":  "Heavy oak. Doubles as a weapon in a pinch.",
+    "type":  "Weapon",
+    "weight":  1.2,
+    "uses":  -1,
+    "enablesActions":  [
+                           "Attack"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Damage",
+                        "trigger":  "Attack",
+                        "parameters":  {
+                                           "amount":  7.0
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Craft":  0.3,
+                        "Harm":  0.35
+                    }
+}

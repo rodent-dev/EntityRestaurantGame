@@ -1,0 +1,23 @@
+﻿{
+  "type": "Merchant",
+  "perSettlement": [0, 1],
+  "behaviors": [
+    { "name": "Charm",    "keywords": ["Social", "Diplomatic"], "affect": [4, 6] },
+    { "name": "Goodwill", "keywords": ["Supportive", "Social"], "affect": [2, 4] },
+    { "name": "Caution",  "keywords": ["SelfPreserving"],       "affect": [1, 3] }
+  ],
+  "actions": ["Speak", "Enchant", "Consume", "Converse", "Idle"],
+  "mind": {
+    "preferences": { "Commerce": [5, 8], "Beauty": [2, 5], "Comfort": [2, 4], "Safety": [1, 3] },
+    "skepticism": [0.4, 0.7],
+    "sociability": [0.6, 0.9],
+    "impulsiveness": [0.2, 0.4]
+  },
+  "selfDescriptors": { "Commerce": [0.3, 0.7] },
+  "stats": { "charisma": [12, 17], "intelligence": [10, 14], "wisdom": [10, 15] },
+  "inventory": {
+    "always": ["business_card"],
+    "pickCount": [2, 3],
+    "pool": ["bouquet", "wine_bottle", "steak", "blessing_herb", "gift", "hex_token"]
+  }
+}

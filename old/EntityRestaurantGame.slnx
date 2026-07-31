@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="EntityObjects/EntityObjects.csproj" />
+  <Project Path="EntityRestaurantGame/EntityRestaurantGame.csproj" />
+  <Project Path="EntityService/EntityService.csproj" />
+</Solution>

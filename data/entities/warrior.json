@@ -1,0 +1,20 @@
+{
+  "id": "warrior",
+  "displayName": "Aldric",
+  "entityType": "Warrior",
+  "position": [5, 3, 0],
+  "inventory": ["fist", "kitchen_knife", "bread_loaf", "hex_token"],
+  "behaviors": [
+    { "name": "Wrath",   "keywords": ["Aggressive", "Violent"],  "affect": 5 },
+    { "name": "Cunning", "keywords": ["Aggressive", "Reactive"], "affect": 3 },
+    { "name": "Hunger",  "keywords": ["Greedy"],                 "affect": 1 }
+  ],
+  "actions": ["Attack", "Defend", "Grapple", "Consume", "Enchant", "Converse", "Idle"],
+  "mind": {
+    "preferences": { "Glory": 6, "Harm": 4, "Nourishment": 3, "Safety": 2 },
+    "skepticism": 0.35,
+    "impulsiveness": 0.7
+  },
+  "selfDescriptors": { "Glory": 0.5, "Harm": 0.6 },
+  "stats": { "strength": 16, "charisma": 8 }
+}

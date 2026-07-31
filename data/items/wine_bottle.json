@@ -1,0 +1,32 @@
+﻿{
+    "itemId":  "wine_bottle",
+    "itemName":  "Bottle of Wine",
+    "description":  "A fine vintage. Shared drinks make fast friends.",
+    "type":  "Merit",
+    "weight":  1.0,
+    "uses":  1,
+    "enablesActions":  [
+                           "Speak"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Relationship",
+                        "trigger":  "Speak",
+                        "parameters":  {
+                                           "amount":  15.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Speak",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Beauty":  0.2,
+                        "Comfort":  0.6,
+                        "Commerce":  0.4
+                    }
+}

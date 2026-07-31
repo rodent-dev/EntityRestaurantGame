@@ -1,0 +1,16 @@
+{
+  "OrbitDrag": [ { "kind": "MouseButton", "code": "Right" } ],
+  "PanLeft": [ { "kind": "Key", "code": "A" } ],
+  "PanRight": [ { "kind": "Key", "code": "D" } ],
+  "PanForward": [ { "kind": "Key", "code": "W" } ],
+  "PanBack": [ { "kind": "Key", "code": "S" } ],
+  "MenuUp": [ { "kind": "Key", "code": "Up" } ],
+  "MenuDown": [ { "kind": "Key", "code": "Down" } ],
+  "Confirm": [ { "kind": "Key", "code": "Enter" }, { "kind": "Key", "code": "Space" } ],
+  "Cancel": [ { "kind": "Key", "code": "Escape" } ],
+  "Select": [ { "kind": "MouseButton", "code": "Left" } ],
+  "ToggleDebug": [ { "kind": "Key", "code": "F3" } ],
+  "PlayerMenu": [ { "kind": "Key", "code": "Tab" } ],
+  "FocusPawn": [ { "kind": "Key", "code": "F" } ],
+  "NextMember": [ { "kind": "Key", "code": "Q" } ]
+}

@@ -1,0 +1,11 @@
+{
+  "itemId": "hooves",
+  "itemName": "Hooves",
+  "description": "Good for kicking, better for running.",
+  "type": "Weapon",
+  "weight": 0.0,
+  "uses": -1,
+  "enablesActions": ["Defend"],
+  "descriptors": { "Harm": 0.1 },
+  "effects": []
+}

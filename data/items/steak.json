@@ -1,0 +1,39 @@
+﻿{
+    "itemId":  "steak",
+    "itemName":  "Steak",
+    "description":  "Perfectly seared. A proper meal for a proper fight.",
+    "type":  "Consumable",
+    "weight":  0.6,
+    "uses":  1,
+    "enablesActions":  [
+                           "Consume"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Heal",
+                        "trigger":  "Consume",
+                        "parameters":  {
+                                           "amount":  40.0
+                                       }
+                    },
+                    {
+                        "type":  "Feed",
+                        "trigger":  "Consume",
+                        "parameters":  {
+                                           "amount":  50.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Consume",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Comfort":  0.5,
+                        "Commerce":  0.3,
+                        "Nourishment":  0.8
+                    }
+}

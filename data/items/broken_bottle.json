@@ -1,0 +1,30 @@
+﻿{
+    "itemId":  "broken_bottle",
+    "itemName":  "Broken Bottle",
+    "description":  "A jagged shard of glass. Hits hard, but won\u0027t last.",
+    "type":  "Weapon",
+    "weight":  0.3,
+    "uses":  4,
+    "enablesActions":  [
+                           "Attack"
+                       ],
+    "effects":  [
+                    {
+                        "type":  "Damage",
+                        "trigger":  "Attack",
+                        "parameters":  {
+                                           "amount":  18.0
+                                       }
+                    },
+                    {
+                        "type":  "ConsumeItem",
+                        "trigger":  "Attack",
+                        "parameters":  {
+
+                                       }
+                    }
+                ],
+    "descriptors":  {
+                        "Harm":  0.45
+                    }
+}

@@ -218,13 +218,13 @@ flowchart LR
 | Tick wheel / events (Engine.Ticks) | ✅ Solid — wrap-aware, lazy-cancel, drift-free | headless SmokeTest run |
 | Item pipeline (Engine.Items + data) | ✅ Solid — validated JSON, 12 items | items load in both UIs |
 | Data-driven world (entities + locations) | ✅ WorldBuilder + data/entities, data/world (2026-07-17) | both harnesses run it |
-| Procedural worldgen (regions/settlements/residents) | ✅ Seeded, pool-driven, deterministic; one settlement simulated live (2026-07-18) — see specs/WorldGen_Design.md | `--gen 42` smoke + dump |
-| Purpose systems: Work-as-choice, factions, wildlife, loot-on-kill | ✅ Landed 2026-07-18 — see specs/SimDepth_Purpose_Plan.md outcome log; keyword-aware clamped relationship weighting fixed en route | SoakTest: first surviving settlement |
+| Procedural worldgen (regions/settlements/residents) | ✅ Seeded, pool-driven, deterministic; one settlement simulated live (2026-07-18) — see specs/implemented/WorldGen_Design.md | `--gen 42` smoke + dump |
+| Purpose systems: Work-as-choice, factions, wildlife, loot-on-kill | ✅ Landed 2026-07-18 — see specs/implemented/SimDepth_Purpose_Plan.md outcome log; keyword-aware clamped relationship weighting fixed en route | SoakTest: first surviving settlement |
 | Soak/stress harness (tools/SoakTest) | ✅ Headless `--gen` runs, N-thousand ticks, economy/violence stats, `-v` verbose | 4000-tick runs at ~20–50k ticks/s |
 | Personal space / separation | ✅ 2026-07-18 — `Entity.Radius` footprint (default 0.6); `EntityService.ResolveOverlaps` relaxation pass after every decision beat keeps pairs ≥ sum-of-radii apart. Interactions still happen at range (3m); entities never envelop each other | smoke screenshot + soak |
 | Arrivals/departures (Track D) · status-band rethink (P2.19) | 🔲 Next — deprioritized/flagged in design review | — |
 | Decision loop / weights | ✅ Solid — 6 weight sources | SmokeTest + console |
-| Dialog / minds / desires | ✅ Implemented (see Dialog_Implementation_Map.md) | console MindScreen |
+| Dialog / minds / desires | ✅ Implemented (see specs/implemented/Dialog_Implementation_Map.md) | console MindScreen |
 | Influence / rumor (player verbs) | ✅ Implemented | console screens |
 | Console UI (9 screens) | ✅ Working — now the debug fallback | default run path |
 | 3D window/camera/meshes/OBJ | ✅ Working | smoke screenshot |
@@ -233,7 +233,7 @@ flowchart LR
 | Debug HUD (text over 3D) | ✅ Working — F3: roster stats, decisions, full signal log | smoke screenshot |
 | Per-entity logs + tiered speech bubbles | ✅ 2026-07-18 — every announce writes actor/other dossiers; LOUD tier (speech, deals, violence, deaths) renders as bubbles over pawns; quiet tier is dossier-only. Replaced the bottom SignalTicker (removed as too noisy) | smoke screenshot |
 | Click-to-inspect (mouse picking) | ✅ 2026-07-18 — left-click picks the nearest projected pawn; 2-page micromenu (Log / Items, Enter flips, Up/Down scrolls) rides beside the live sim; click another pawn to retarget | smoke screenshot |
-| Title / settings / inventory-verbs / interaction / conversation UI | 🔲 Next — see specs/UI_2D_Interface_Plan.md build order | — |
+| Title / settings / inventory-verbs / interaction / conversation UI | 🔲 Next — see specs/active/UI_2D_Interface_Plan.md build order | — |
 | Regions/settlements view | 🔲 Deliberately separate controller (not UI scenes) | project decision |
 | Item PNGs beside bubbles | 🔲 Future project (user-flagged) | — |
 | Audio, save/load | 🔲 Not started | — |

@@ -1,0 +1,28 @@
+name: build
+
+# Compile-only CI. Releases are cut by hand — this just proves the tree builds.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore EntityARestaurantGame.slnx
+
+      - name: Build (Release)
+        run: dotnet build EntityARestaurantGame.slnx --configuration Release --no-restore

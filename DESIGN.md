@@ -5,7 +5,7 @@
 > *new* features against — when you add a system, read the section it touches
 > first so you extend the seams instead of cutting across them.
 >
-> Companion docs: `ARCHITECTURE.md` (layering rules) and `specs/docs-6-11/`
+> Companion docs: `ARCHITECTURE.md` (layering rules) and `specs/archive/docs-6-11/`
 > (original tick/event/world/speech design notes). Last synced to code: 2026-06-17.
 
 ---
@@ -437,7 +437,7 @@ can't run with redirected input). Use it to exercise the sim in tests/CI.
 
 Sim truth is renderer-free **by rule**: positions are `Vector3`, zones are AABBs,
 movement is vector math — all 3D-ready. The `RenderCue`/cue-sink pattern from
-`specs/docs-6-11/TickSystem.cs` is **deliberately unported**; it becomes the render
+`specs/archive/docs-6-11/TickSystem.cs` is **deliberately unported**; it becomes the render
 interface when a real renderer arrives. Until then: conceptual interactions plus
 the debug ASCII map. **Do not build elaborate console/2D presentation systems** —
 they would be throwaway work. Any debug view must read sim truth and stay disposable.
@@ -482,7 +482,7 @@ they would be throwaway work. Any debug view must read sim truth and stay dispos
    boosts Consume), proximity, situational awareness.
 3. **Action result propagation** — actions ripple beyond the direct target:
    witnesses shift relationships, bystander mood changes, a successful Speak
-   cascades cooperation. The **dialog/speech system** (`specs/docs-6-11`,
+   cascades cooperation. The **dialog/speech system** (`specs/archive/docs-6-11`,
    "SpeechSystem_WIP") is the next discussion.
 
 Each is meant to *add or read keywords*, not add hardcoded branches — sub-actions

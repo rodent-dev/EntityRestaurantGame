@@ -3,6 +3,7 @@
   <Folder Name="/src/">
     <Project Path="src/Engine.Input/Engine.Input.csproj" />
     <Project Path="src/Engine.Render/Engine.Render.csproj" />
+    <Project Path="src/Engine.Ui/Engine.Ui.csproj" />
   </Folder>
   <Project Path="src/Engine.Items/Engine.Items.csproj" />
   <Project Path="src/Engine.Spatial/Engine.Spatial.csproj" />
@@ -10,4 +11,5 @@
   <Project Path="src/Game.Services/Game.Services.csproj" />
   <Project Path="src/EntityARestaurantGame/EntityARestaurantGame.csproj" />
   <Project Path="tools/SmokeTest/SmokeTest.csproj" />
+  <Project Path="tools/SoakTest/SoakTest.csproj" />
 </Solution>

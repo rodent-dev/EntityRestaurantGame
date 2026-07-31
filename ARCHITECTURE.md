@@ -30,14 +30,16 @@ src/
                            #   Render3D/ (Render3DHost — the 3D composition point),
                            #   Scenes/ (2D interface scenes: pause, settings, …)
 tools/SmokeTest/           # headless harness driving the controller without the UI
+tools/SoakTest/            # long-run stability harness (settlement survival)
 data/items/                # item JSON, linked into the game's output at build
 data/shaders/              # GLSL (basic.vert/frag), linked into output at build
 data/input/                # bindings.json — action-to-device control bindings
 data/models/               # Wavefront OBJ assets (pyramid.obj)
 data/ui/                   # menu background images (any PNG/JPG/BMP/TGA)
 data/fonts/                # drop-in .ttf overrides the game font (system serif fallback)
-specs/                     # design docs (docs-6-11 = tick/event/world/speech designs)
-old/                       # archived snapshots (incl. pre-reorg-2026-06-11)
+specs/active/              # designed, not yet built
+specs/implemented/         # shipped — reference for how each system works
+specs/archive/             # superseded (speckit 001, docs-6-11 snapshots)
 ```
 
 ## Dependency rules (compiler-enforced via project references)
@@ -84,7 +86,7 @@ sim truth.
 ## 2D interface (Engine.Ui)
 
 The windowed counterpart of the console screen stack — see
-`specs/UI_2D_Interface_Plan.md` for the full component inventory and build
+`specs/active/UI_2D_Interface_Plan.md` for the full component inventory and build
 order. `SceneManager` holds a stack of `Scene`s above the 3D world; the top
 scene gets a device-free `UiInput`, returns a `SceneAction`
 (Stay/Pop/Push/Replace/Quit), and while any sim-blocking scene is on the

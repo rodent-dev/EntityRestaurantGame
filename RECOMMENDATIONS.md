@@ -59,7 +59,7 @@ item data), plus the running smoke evidence.
 ### Dead / half-wired code (found in the sweep)
 - ~~**P2.6 — `EventTimeline`**~~ **Removed 2026-07-17** (enum + `Timeline` on
   IEvent and all three events). A breadcrumb comment in `IEvent.cs` points to
-  `specs/docs-6-11/EventExamples.md` for when the dormancy layer lands.
+  `specs/archive/docs-6-11/EventExamples.md` for when the dormancy layer lands.
 - ~~**P2.7 — `IntentType.Question` / `Quest`**~~ **Removed 2026-07-17.**
 - ~~**P2.8 — `ItemFactory.HandlerClass`**~~ **Removed 2026-07-17** (DTO field
   + reflection branch).
@@ -153,7 +153,7 @@ Fixes P2.12. (The strict-deserialization half of this item shipped early with
 the P2.9 fix — tests should still cover the failure cases.)
 
 ### R5. Continue the UI build order *(multi-session, spec exists)*
-Per `specs/UI_2D_Interface_Plan.md`: title screen → real settings pages
+Per `specs/active/UI_2D_Interface_Plan.md`: title screen → real settings pages
 (video page owns canvas-resolution setting, fixing part of P2.15) → promote
 the DebugHud signal ticker into the player-facing toast/HUD → interaction
 menu + inventory (first gameplay through the new UI). TextBox needs char

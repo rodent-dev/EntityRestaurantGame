@@ -15,8 +15,13 @@ minds, and dialog inside a restaurant world, rendered either as a console UI
 - `ARCHITECTURE.md` — layering rules, project map, dependency direction
 - `STATUS.md` — current state of every system, with layered mermaid diagrams
 - `RECOMMENDATIONS.md` — formal review findings + prioritized pickup points
-- `specs/UI_2D_Interface_Plan.md` — UI component inventory and build order
-- `DESIGN.md`, `Dialog_*.md` — sim design pillars and the dialog system
+- `specs/active/UI_2D_Interface_Plan.md` — UI component inventory and build order
+- `DESIGN.md` — sim design pillars
+- `specs/implemented/Dialog_*.md` — the dialog system as built
+
+Specs are filed by state: `specs/active/` (designed, not yet built),
+`specs/implemented/` (shipped — reference for how it works), `specs/archive/`
+(superseded; historical snapshots kept for context).
 
 ## Commands
 
@@ -37,10 +42,14 @@ src/Game.Contracts  entity state only (trivial self-mutators at most)
 src/Game.Services   all sim logic (HOW)
 src/EntityARestaurantGame  composition root, EntityController (WHEN), UIs
 tools/SmokeTest     headless harness
+tools/SoakTest      long-run stability harness
 data/               items, entities, world/locations, shaders, input bindings,
                     models, ui images, fonts — content is JSON/asset files
-old/                archived snapshots — never touch
+specs/              design docs, filed active/ implemented/ archive/
 ```
+
+The `old/` archived snapshots were removed on 2026-07-30; they remain on the
+`baseline_old` branch if ever needed.
 
 ## Hard rules
 

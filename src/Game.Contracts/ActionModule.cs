@@ -1,8 +1,17 @@
 namespace Game.Contracts;
 
+/// <summary>
+/// The verbs an entity has. Ordered by name, deliberately: BuildCandidates
+/// walks this to build the candidate list, and SelectWeighted then walks THAT
+/// list accumulating until it passes the roll — so candidate order decides who
+/// wins a given roll. A plain Dictionary iterates in string-hash order, and
+/// .NET randomizes string hashing per process, which silently made every run
+/// of the same seeded world diverge. Ordinal sort costs nothing at ~10 verbs
+/// and buys reproducibility.
+/// </summary>
 public class ActionModule
 {
-    private readonly Dictionary<string, IAction> _actions = new();
+    private readonly SortedDictionary<string, IAction> _actions = new(StringComparer.Ordinal);
 
     public void AttachAction(IAction action) => _actions[action.ActionName] = action;
     public bool DetachAction(string actionName) => _actions.Remove(actionName);

@@ -17,15 +17,22 @@ public class EntityService
     public const float ProximityFalloffPerReach = 2f;
     public const int ProximityPenaltyCap = 8;
 
-    private readonly Random _rng = new();
+    private readonly Random _rng;
     private readonly Vector3 _worldMin;
     private readonly Vector3 _worldMax;
 
     public LocationRegistry? Locations { get; }
 
-    public EntityService(LocationRegistry? locations = null)
+    /// <summary>
+    /// Pass an <paramref name="rng"/> to make a run reproducible. This service
+    /// owns selection and item picking, so it is the largest single source of
+    /// run-to-run variance — without a seeded stream here, two runs of the same
+    /// world diverge and no balance change can be measured against the noise.
+    /// </summary>
+    public EntityService(LocationRegistry? locations = null, Random? rng = null)
     {
         Locations = locations;
+        _rng = rng ?? new Random();
         if (locations is { All.Count: > 0 })
         {
             _worldMin = locations.All.Select(l => l.Min).Aggregate(Vector3.Min);

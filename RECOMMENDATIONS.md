@@ -86,6 +86,57 @@ item data), plus the running smoke evidence.
   *address the failing need* (hunger → Greedy/food-producing; low HP →
   Defensive; low mood → Social), not a flat keyword basket. Revisit alongside
   the first balance pass of the purpose systems.
+- ~~**P2.21 — The sim was not reproducible.**~~ **Found & fixed 2026-08-09.**
+  Worldgen was seeded; the RUN was not. Same world, three soaks: survivors
+  1/9, 3/9, 2/9 — noise larger than any balance change you'd want to measure,
+  which is why P2.19 never got a numbers pass. Four separate causes, and the
+  order they were found in is the lesson:
+  1. `EntityService._rng` had no injection point at all (it owns selection).
+  2. `ActionModule` returned `Dictionary.Values`. Iteration follows string
+     hash order, .NET randomizes that **per process**, and `SelectWeighted`
+     walks the candidate list cumulatively — so the same roll picked a
+     different action run to run. Now a `SortedDictionary` with an ordinal
+     comparer.
+  3. `DialogService` fed softmax candidates from `Mind.Beliefs` (a string-keyed
+     dictionary) and broke `OrderByDescending` ties by hash order. Ordinal
+     tiebreaks added at five sites.
+  4. `WorkAction._rng = new()` — a **target-typed `new()`**, so `grep "new
+     Random"` does not find it. It decided which good came off the bench,
+     which changed what everyone could eat, trade, and covet.
+
+  `WorldBuilder.BuildGenerated(worldSeed, simSeed)` now derives one stream per
+  service from a single sim seed; omitting it keeps the old unseeded
+  behaviour. `SoakTest [seed] [ticks] [simSeed]` and the new DecisionProbe
+  `--selftest` guard it. **General rule this earned: any collection walked
+  cumulatively, or ordered with possible ties, must have a total order — and
+  `new()` hides RNG from text search.**
+- **P2.22 — Status weighting barely steers anything** *(measured 2026-08-09,
+  `tools/DecisionProbe`, world 42 / sim 1)*. The sharp version of P2.19, with
+  numbers. Over the first 500 ticks of a live settlement:
+  - **Converse takes 45.7% of all beats and 53% of the selection mass**;
+    Consume 2.5% and Work 2.3%. The settlement talks itself to death.
+  - Mean weight by source: Behaviors **6.5**, Situation **9.3**, Base 2.9,
+    Relationship 1.0, **Status 1.0**. Needs are the weakest voice in the room.
+  - Below half hunger (25.7% of beats) Converse still wins **58.3%** and
+    Consume does not place in the top six. The doc's "starving entities spam
+    Defend" is real but understated — they mostly *chat*.
+  - Root cause is arithmetic, not philosophy: deficit BOOSTS scale by
+    `1.0 - ratio` (up to 1.0) while the critical PENALTIES scale by
+    `threshold - ratio`, which cannot exceed 0.25. With scales of 3–5 and an
+    `(int)` truncation in `ScaleByKeywords`, the hunger-critical Social
+    penalty maxes at `3 × 0.25 = 0.75` → **0**. The critical band is
+    decorative. HP-critical maxes at 1.
+  - 36% of all violence is settler-on-settler, whom factions rate positively.
+    `rel²/8` gives at most −4 suppression at the faction's top warmth (and
+    **0** for rel 1–2, from integer division), while combat drives rel to −10
+    for a +12 hostile bonus. Amity cannot outrun a single stray punch.
+- **P2.23 — EARG's selector has no viability filter.** Luna (the sibling
+  project) filters candidates to `totalWeight > 0` before rolling and falls
+  back to the least-bad three only when nothing appeals; EARG floors every
+  candidate at 1, so ~24 candidates/beat each buy a lottery ticket. Measured
+  cost here is small (4.1% of mass) because behaviour weights are large, but
+  it grows with roster size and it is why Approach — which deliberately has no
+  BaseWeight — still collects 3.3% of the mass as pure noise.
 - **P2.20 — Mind traits are shotgun-surgery** *(user-flagged 2026-07-18)*:
   adding `Sociability` required six code sites (MindModule property,
   MindDefinition + MindRange DTO mirrors, WorldBuilder copy, generator
@@ -177,6 +228,27 @@ Absolute mouse position + picking ray (unlocks click-a-pawn → inspect, the
 3D equivalent of the console's EntityListScreen); text batching in
 `Renderer2D` if glyph draw calls ever show up in frame time (they won't at
 menu scale); PNG screenshots.
+
+### R9. The balance pass, now that it can be measured *(next session)*
+P2.21 unblocked this: `SoakTest 42 1500 5` is byte-identical across runs, so a
+change can be A/B'd instead of argued about. `tools/DecisionProbe 42 500 1`
+prints the before/after tables. Suggested order, cheapest first — **each is a
+design call, so decide the intent before touching the constant**:
+
+1. **Fix the penalty scale bug** (P2.22). Deficit penalties should scale on the
+   same `1.0 - ratio` footing as the boosts, or on `(threshold - ratio) /
+   threshold` so the band saturates at 1.0 instead of 0.25. Round away from
+   zero, or accumulate in double and truncate once. This alone lets a starving
+   entity stop chatting.
+2. **Point the deficit at the need**, per P2.19's original direction: hunger
+   should boost food-producing/Greedy, low HP Defensive, low mood Social —
+   not one flat SelfPreserving basket that Idle and Defend also match.
+3. **Let amity hold.** Either raise the positive side of `rel²/8` or floor
+   small positive rel at 1 so faction warmth is not silently zero.
+4. **Adopt Luna's viability filter** (P2.23) once 1–3 land, and re-measure.
+
+Do them one at a time with the probe open; the point of the seed work is that
+you can now attribute each delta to the change that caused it.
 
 ---
 

@@ -32,7 +32,15 @@ dotnet run --project src\EntityARestaurantGame -- --3d                # 3D + 2D 
 dotnet run --project src\EntityARestaurantGame -- --3d --smoke       # auto-close + smoke.bmp
 dotnet run --project src\EntityARestaurantGame -- --gen 42 --3d      # procedural world (seeded)
 dotnet run --project tools\SmokeTest                                  # headless sim exercise
+dotnet run --project tools\SoakTest -- 42 4000 5                      # long run; 3rd arg = sim seed (reproducible)
+dotnet run --project tools\DecisionProbe -- 42 500 1                  # where the decision probability went
+dotnet run --project tools\DecisionProbe -- 42 500 1 --selftest       # determinism guard
 ```
+
+**Reproducibility**: worldgen and the run are seeded separately —
+`BuildGenerated(worldSeed, simSeed)`. Omit `simSeed` for a random run; supply
+it to A/B a balance change. See RECOMMENDATIONS.md P2.21 for the four things
+that used to break it (and the rule about `new()` hiding RNG from grep).
 
 ## Structure
 

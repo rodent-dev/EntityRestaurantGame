@@ -11,10 +11,15 @@ int seed = args.Length > 0 && int.TryParse(args[0], out int s) ? s : 42;
 int targetTicks = args.Length > 1 && int.TryParse(args[1], out int t) ? t : 4000;
 bool verbose = args.Contains("-v"); // print every signal as it happens
 
-var world = WorldBuilder.BuildGenerated(seed);
+// Third positional arg seeds the RUN (the world already has its own seed).
+// Supply it to A/B a balance change; omit it for the old roll-the-dice soak.
+int? simSeed = args.Length > 2 && int.TryParse(args[2], out int ss) ? ss : null;
+
+var world = WorldBuilder.BuildGenerated(seed, simSeed);
 var controller = world.Controller;
 Console.WriteLine(world.Map!.Summary());
-Console.WriteLine($"[soak] running {targetTicks} ticks on stage '{world.Map.ActiveStage.Name}'...");
+Console.WriteLine($"[soak] running {targetTicks} ticks on stage '{world.Map.ActiveStage.Name}'"
+    + (simSeed is { } shown ? $" (sim seed {shown} — reproducible)" : " (unseeded run)") + "...");
 Console.WriteLine();
 
 string[] foodIds = ["bread_loaf", "steak", "raw_meat", "coffee_cup"];

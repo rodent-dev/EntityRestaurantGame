@@ -188,6 +188,7 @@ public class DialogService
         {
             var claims = item.Descriptors
                 .OrderByDescending(d => Math.Abs(d.Value))
+                .ThenBy(d => d.Key, StringComparer.Ordinal)
                 .Take(2)
                 .Select(d => new Claim(item.ItemId, item.ItemName, d.Key, d.Value))
                 .ToList();
@@ -204,7 +205,10 @@ public class DialogService
         // 3. Boast: subject-matter about self — same handler, arrogant leaf.
         if (s.SelfDescriptors.Count > 0)
         {
-            var top = s.SelfDescriptors.OrderByDescending(d => Math.Abs(d.Value)).First();
+            var top = s.SelfDescriptors
+                .OrderByDescending(d => Math.Abs(d.Value))
+                .ThenBy(d => d.Key, StringComparer.Ordinal)
+                .First();
             var u = new Utterance
             {
                 Type = IntentType.SubjectMatter,
@@ -215,13 +219,18 @@ public class DialogService
         }
 
         // 4. Rumor: pass along the strongest thing believed about a third party.
-        foreach (var (objectId, sheet) in s.Mind.Beliefs)
+        //    Ordinal iteration, not hash order: these become softmax candidates,
+        //    and the pick walks the list cumulatively (see ActionModule).
+        foreach (var (objectId, sheet) in s.Mind.Beliefs.OrderBy(b => b.Key, StringComparer.Ordinal))
         {
             if (objectId == a.ID || objectId == s.ID) continue;
             var subject = _roster().FirstOrDefault(e => e.ID == objectId);
             if (subject == null) continue;   // only gossip about people here
 
-            var strongest = sheet.OrderByDescending(kv => Math.Abs(kv.Value)).FirstOrDefault();
+            var strongest = sheet
+                .OrderByDescending(kv => Math.Abs(kv.Value))
+                .ThenBy(kv => kv.Key, StringComparer.Ordinal)
+                .FirstOrDefault();
             if (Math.Abs(strongest.Value) < 0.2) continue;
 
             double valence = Math.Clamp(strongest.Value, -1, 1) * 0.5;
@@ -246,6 +255,7 @@ public class DialogService
             var sweetener = s.Inventory
                 .Where(i => i.Descriptors.Count > 0 && i.ItemId != prize.ItemId)
                 .OrderBy(i => _minds.KeepValue(s, i))
+                .ThenBy(i => i.ItemId, StringComparer.Ordinal)
                 .FirstOrDefault();
 
             bool coerce = sweetener == null || (rel < 0 && aggressive);
@@ -282,7 +292,10 @@ public class DialogService
         // always seeds SOME belief and the pipeline never stalls.
         if (candidates.Count == 0)
         {
-            var topAxis = s.Mind.Preferences.OrderByDescending(p => p.Value).FirstOrDefault().Key ?? Axes.Comfort;
+            var topAxis = s.Mind.Preferences
+                .OrderByDescending(p => p.Value)
+                .ThenBy(p => p.Key, StringComparer.Ordinal)
+                .FirstOrDefault().Key ?? Axes.Comfort;
             var u = new Utterance
             {
                 Type = IntentType.SubjectMatter,

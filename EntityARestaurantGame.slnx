@@ -10,6 +10,7 @@
   <Project Path="src/Game.Contracts/Game.Contracts.csproj" />
   <Project Path="src/Game.Services/Game.Services.csproj" />
   <Project Path="src/EntityARestaurantGame/EntityARestaurantGame.csproj" />
+  <Project Path="tools/DecisionProbe/DecisionProbe.csproj" />
   <Project Path="tools/SmokeTest/SmokeTest.csproj" />
   <Project Path="tools/SoakTest/SoakTest.csproj" />
 </Solution>

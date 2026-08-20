@@ -38,8 +38,13 @@ public sealed class WorldBuilder
     private EntityDefinition? _drifterTemplate;
     private int _drifterCount;
 
-    /// <summary>The handcrafted world: data/world/locations.json + data/entities/*.json.</summary>
-    public static WorldBuilder BuildDefault()
+    /// <summary>Shared stream for per-entity actions built during Instantiate
+    /// (currently Work). Null when the run is deliberately unseeded.</summary>
+    private readonly Random? _actionRng;
+
+    /// <summary>The handcrafted world: data/world/locations.json + data/entities/*.json.
+    /// <paramref name="simSeed"/> makes the RUN reproducible (worldgen has its own seed).</summary>
+    public static WorldBuilder BuildDefault(int? simSeed = null)
     {
         string dataRoot = ResolveDataRoot();
         var locations = LoadLocationDefs(Path.Combine(dataRoot, "world", "locations.json"));
@@ -48,21 +53,22 @@ public sealed class WorldBuilder
             .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
             .Select(LoadDefinition)
             .ToList();
-        return new WorldBuilder(dataRoot, locations, residents, map: null);
+        return new WorldBuilder(dataRoot, locations, residents, map: null, simSeed);
     }
 
     /// <summary>A procedurally generated world (data/worldgen pools); the active
-    /// settlement becomes the live stage, the rest stay data on <see cref="Map"/>.</summary>
-    public static WorldBuilder BuildGenerated(int? seed = null)
+    /// settlement becomes the live stage, the rest stay data on <see cref="Map"/>.
+    /// <paramref name="seed"/> picks the WORLD; <paramref name="simSeed"/> picks the RUN.</summary>
+    public static WorldBuilder BuildGenerated(int? seed = null, int? simSeed = null)
     {
         string dataRoot = ResolveDataRoot();
         var map = WorldGenerator.Generate(dataRoot, seed);
         var stage = map.ActiveStage;
-        return new WorldBuilder(dataRoot, stage.Venue, stage.Residents, map);
+        return new WorldBuilder(dataRoot, stage.Venue, stage.Residents, map, simSeed);
     }
 
     private WorldBuilder(string dataRoot, IReadOnlyList<LocationDefinition> locationDefs,
-        IReadOnlyList<EntityDefinition> residentDefs, WorldMap? map)
+        IReadOnlyList<EntityDefinition> residentDefs, WorldMap? map, int? simSeed = null)
     {
         DataRoot = dataRoot;
         Map = map;
@@ -79,10 +85,17 @@ public sealed class WorldBuilder
         foreach (var d in locationDefs)
             Locations.Register(new Location(d.Tag, ToVector(d.Min, d.Tag), ToVector(d.Max, d.Tag)));
 
+        // Each service gets its OWN stream, derived from the one sim seed, so
+        // adding an rng call in dialog can't shift what the selector rolls.
+        // Null seed = a fresh unpredictable run, exactly as before.
+        var seeds = simSeed is { } s ? new Random(s) : null;
+        Random? Stream() => seeds is null ? null : new Random(seeds.Next());
+
         var minds = new MindService();
-        Dialog = new DialogService(minds);
-        Parties = new PartyService();
-        Controller = new EntityController(new EntityService(Locations), Dialog, Parties);
+        Dialog = new DialogService(minds, Stream());
+        Parties = new PartyService(Stream());
+        Controller = new EntityController(new EntityService(Locations, Stream()), Dialog, Parties);
+        _actionRng = Stream();
         Parties.BindWorld(() => Controller.ActiveEntities);
 
         foreach (var def in residentDefs)
@@ -164,7 +177,7 @@ public sealed class WorldBuilder
                         throw new InvalidDataException($"Entity '{def.Id}' work.produces references unknown item '{itemId}'.");
                 entity.Actions.AttachAction(new WorkAction(
                     new WorkSpec(workplace, work.Produces, work.MaxStock, work.Keywords),
-                    LoadItem));
+                    LoadItem, _actionRng));
             }
         }
 

@@ -100,6 +100,15 @@ public class EntityController
     public PartyService? Parties => _parties;
 
     /// <summary>
+    /// Optional tap on the decision pipeline: fires once per beat with the full
+    /// candidate set and what won. Diagnostics only — the sim runs the same
+    /// whether or not anyone is listening. Balance harnesses subscribe here
+    /// instead of inferring intent from the signal log, which cannot see the
+    /// beats that never announce (Idle, Converse) or the options that lost.
+    /// </summary>
+    public Action<DecisionTrace>? DecisionObserver { get; set; }
+
+    /// <summary>
     /// The band the player travels with — the favored pawn's party. Everyone
     /// in it is "ours" for influence purposes; everyone else is a stranger.
     /// Null before the intro picks a pawn.
@@ -253,6 +262,7 @@ public class EntityController
                 EntityService.ReachDistance(entity, selected.Target));
             RecordDecision(entity, "Approach", selected.Target.DisplayName, "Distance");
             Announce($"{entity.DisplayName} moves toward {selected.Target.DisplayName} ({remaining:0.0}m away)", entity);
+            DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: true));
             _entities.ResolveOverlaps(ActiveEntities);
             return;
         }
@@ -262,7 +272,11 @@ public class EntityController
         entity.PendingInfluence = null;   // consumed once an action actually lands
 
         var item = _entities.SelectItem(entity, selected);
-        if (item == null && selected.Action.RequiresItem) return;
+        if (item == null && selected.Action.RequiresItem)
+        {
+            DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: true));
+            return;
+        }
 
         bool targetWasAlive = selected.Target.ID != entity.ID && selected.Target.IsAlive;
         selected.Action.Execute(entity, selected.Target, item);
@@ -286,6 +300,7 @@ public class EntityController
 
         _entities.ApplyMoodFallout(entity, selected);
         RecordDecision(entity, selected);
+        DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: false));
         AnnounceDecision(entity, selected, item, influenced);
         FlushDialog();
         SweepDeaths();

@@ -23,12 +23,16 @@ public sealed class WorkAction : IAction
 {
     private readonly WorkSpec _spec;
     private readonly Func<string, IItem> _produceItem;
-    private readonly Random _rng = new();
+    private readonly Random _rng;
 
-    public WorkAction(WorkSpec spec, Func<string, IItem> produceItem)
+    /// <summary>Pass an <paramref name="rng"/> to keep production reproducible —
+    /// which good comes off the bench changes what everyone can eat, trade, and
+    /// covet, so an unseeded stream here desynchronises the whole run.</summary>
+    public WorkAction(WorkSpec spec, Func<string, IItem> produceItem, Random? rng = null)
     {
         _spec = spec;
         _produceItem = produceItem;
+        _rng = rng ?? new Random();
         Keywords = [.. spec.Keywords];
     }
 

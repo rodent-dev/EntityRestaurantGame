@@ -103,8 +103,10 @@ sequenceDiagram
     participant E as EntityDecisionEvent
     participant C as EntityController.ActOnce
     participant S as EntityService
+    participant K as CommitmentCalculator
     participant D as DialogService
     participant A as IAction
+    participant X as EventDistributor
 
     W->>E: Fire (bucket reached)
     E->>C: ActOnce(entity)
@@ -112,21 +114,54 @@ sequenceDiagram
     C->>S: ApplyBehaviorWeights + ApplyStatusWeights
     C->>D: ApplySituationWeights (reply-pull, covet-pull)
     C->>S: ApplyInfluence (player nudge, stranger ÷2)
-    C->>S: SelectWeighted
+    C->>S: SelectWeighted → the CHALLENGER
+    alt entity.Current is live (a long action underway)
+        C->>K: Weigh(actor, action, activity) → Commitment
+        alt commitment.Total >= challenger.TotalWeight
+            C->>A: Sustain — one beat: commute, drain, grind
+            C->>C: Progress += Focus(entity)  (only if the beat counted)
+            C->>A: Resolve(performance) if Elapsed hits Duration
+        else walked out
+            C->>A: Resolve(partial performance) — paid for what it managed
+        end
+    end
     alt target out of InteractionRange (3m)
         C->>S: MoveToward — beat becomes movement, intent persists
         C-->>W: (announce "moves toward")
     else in range
         C->>S: SelectItem (viable, random)
-        C->>A: Execute(entity, target, item)
+        C->>C: Begin → Activity, then Advance one beat
         A->>A: item.Apply → registered effects run
         C->>S: ApplyMoodFallout (keyword-driven)
-        C->>C: RecordDecision · AnnounceDecision → signal log
+        C->>C: RecordDecision · AnnounceRun
+        C->>X: Publish(WorldEvent) → actor · participants · witnesses (12m)
         C->>D: FlushDialog (drain lines, schedule WantSpikeEvents)
         C->>C: SweepDeaths (lazy-cancel dead entities' events)
     end
     E-->>W: reschedule at FireTick + 5 (drift-free)
 ```
+
+**Duration 1 is the norm and costs nothing.** An instantaneous verb begins and
+settles inside one `ActOnce`, so the commitment branch never runs for it and
+the beat is exactly what it was before activities existed. Only an action that
+asks for more beats is ever observed in `Entity.Current`.
+
+### Commitment (what makes an entity STAY)
+
+Resolved by comparison against the challenger's weight, never by folding the
+incumbent into the roll — a shift weighed 60 against food weighed 20 would be
+abandoned with probability 0.25 on *every* beat, and over a whole shift that is
+a certainty rather than a risk. Per-beat rolls compound; thresholds do not.
+
+| Term | Weight | When |
+|---|---|---|
+| `Baseline` | +4 | always — unwillingness to reopen a settled question |
+| `Momentum` | +18 | ramps in over the first quarter of the duration, then flat |
+| `SettlingPeak` | +10, −3/beat | covers the start, where momentum is weakest |
+| `NearlyThere` | +6 | past 75% elapsed |
+| `DistressMax` | up to −18 | worst need below the 25% critical line |
+| `AddressedBy` | −6 | an un-stale utterance is sitting in `Mind.Deposited` |
+| `WhisperPull` | −10 (÷2 stranger) | a player whisper the activity does not already answer |
 
 ### The weight pipeline (what makes an entity "want" an action)
 
@@ -224,6 +259,8 @@ flowchart LR
 | Personal space / separation | ✅ 2026-07-18 — `Entity.Radius` footprint (default 0.6); `EntityService.ResolveOverlaps` relaxation pass after every decision beat keeps pairs ≥ sum-of-radii apart. Interactions still happen at range (3m); entities never envelop each other | smoke screenshot + soak |
 | Arrivals/departures (Track D) · status-band rethink (P2.19) | 🔲 Next — deprioritized/flagged in design review | — |
 | Decision loop / weights | ✅ Solid — 6 weight sources | SmokeTest + console |
+| Long-running actions (jobs) | ✅ 2026-08-26 — `IAction.Duration/Sustain/Resolve` (defaults keep every existing verb instantaneous), `Entity.Current` activity, `CommitmentCalculator`, `EntityService.Focus`; `WorkAction` is a shift paid on performance. See specs/implemented/Activities_And_Events.md | soak `-v`: `Work (1.00)` … `Work, cut short (0.50)`; probe selftest PASS |
+| Event spine / distributor | ✅ 2026-08-26 — typed `WorldEvent` ledger behind every announce, audience tiers actor/participant/witness (12m), `IEventReaction` seam. Witnesses reach reactions always, logs only when loud | SmokeTest: 293 witness slots reached in a 3-entity world |
 | Dialog / minds / desires | ✅ Implemented (see specs/implemented/Dialog_Implementation_Map.md) | console MindScreen |
 | Influence / rumor (player verbs) | ✅ Implemented | console screens |
 | Console UI (9 screens) | ✅ Working — now the debug fallback | default run path |

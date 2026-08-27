@@ -20,9 +20,13 @@ src/
 │                          #   references Engine.Render only
 │
 ├── Game.Contracts/        # IDENTITIES — Entity, EntityNeeds, BehaviorModule, IAction,
-│                          #   ActionCandidate, Influence, DecisionRecord, GameSignal
+│                          #   ActionCandidate, Influence, DecisionRecord, GameSignal,
+│                          #   Activity (a run in progress), Commitment,
+│                          #   WorldEvent + IEventReaction (the typed ledger row)
 ├── Game.Services/         # HOW — EntityService (candidates, weights, selection, needs,
-│                          #   mood fallout, movement), StatusWeightCalculator,
+│                          #   mood fallout, movement, Focus), StatusWeightCalculator,
+│                          #   CommitmentCalculator (is anything worth stopping for),
+│                          #   EventDistributor (who noticed what),
 │                          #   standard Actions/ and item Effects/
 └── EntityARestaurantGame/ # THE GAME — Program (composition root), EntityController
                            #   (WHEN: owns clock/wheel/rosters/signal log),
@@ -62,8 +66,25 @@ specs/archive/             # superseded (speckit 001, docs-6-11 snapshots)
 ## Controller vs. Service in one sentence
 
 `EntityController` decides **when** (decision beats, hunger pulses, death
-sweeps, what gets announced); `EntityService` knows **how** (build candidates,
-weigh them, move a pawn, decay hunger). UI talks only to the controller.
+sweeps, what gets announced, when an activity begins/advances/settles);
+`EntityService` knows **how** (build candidates, weigh them, move a pawn, decay
+hunger, price focus). UI talks only to the controller.
+
+## Activities and the event spine
+
+Two rules that cut across the layering, both landed 2026-08-26 — see
+`specs/implemented/Activities_And_Events.md`:
+
+- **An action may take several beats.** `IAction.Duration`, `Sustain` and
+  `Resolve` are default interface members, so an action that says nothing is
+  instantaneous and behaves exactly as before. The *run* is `Entity.Current`
+  (state, in Contracts); the *decision to stay* is `CommitmentCalculator`
+  (logic, in Services); *begin/advance/settle* is the controller (timing).
+- **Every announcement is a typed fact with an audience.** `Announce` builds a
+  `WorldEvent` and hands it to `EventDistributor`, which works out who was the
+  actor, who was a participant, and who merely witnessed it, then runs the
+  registered `IEventReaction`s. Prose is a rendering carried alongside the
+  facts; reactions match `WorldEvent.Keywords`, never `ActionName`.
 
 ## Rendering boundary (3D)
 

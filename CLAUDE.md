@@ -18,6 +18,9 @@ minds, and dialog inside a restaurant world, rendered either as a console UI
 - `specs/active/UI_2D_Interface_Plan.md` — UI component inventory and build order
 - `DESIGN.md` — sim design pillars
 - `specs/implemented/Dialog_*.md` — the dialog system as built
+- `specs/implemented/Activities_And_Events.md` — long-running actions (a job is
+  a commitment paid on performance) and the event distributor (who noticed
+  what); both ported from the sibling Luna project
 
 Specs are filed by state: `specs/active/` (designed, not yet built),
 `specs/implemented/` (shipped — reference for how it works), `specs/archive/`
@@ -66,6 +69,13 @@ The `old/` archived snapshots were removed on 2026-07-30; they remain on the
 - **Renderers only READ sim truth**; the sim never references rendering.
 - **Keywords, not names**: weighting systems (status, mood, behaviors) match
   action keywords — never test `ActionName` in a weight system.
+- **An action that takes time is defended by comparison, never by a roll.**
+  `CommitmentCalculator` prices staying; the controller compares it against the
+  challenger's weight. Folding the incumbent into the weighted roll makes
+  abandonment compound to a certainty over the duration.
+- **Announcements are typed facts with an audience.** `Announce`/`Publish` build
+  a `WorldEvent` and the `EventDistributor` decides who noticed. Reactions match
+  `WorldEvent.Keywords`, never `ActionName`.
 - **Regions/settlements are NOT UI scenes** — they belong to a separate
   future world-view controller, not the Engine.Ui SceneManager.
 - **No new NuGet packages without presenting vetted alternatives first**

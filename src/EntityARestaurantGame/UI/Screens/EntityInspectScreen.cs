@@ -51,6 +51,22 @@ public class EntityInspectScreen : IScreen
             }
 
         lines.Add(string.Empty);
+        lines.Add("── Currently ──");
+        if (_entity.Current is { } activity)
+        {
+            var action = _entity.Actions.GetAction(activity.ActionName);
+            int duration = action?.Duration ?? 1;
+            lines.Add($"  {activity.ActionName}  beat {activity.Elapsed}/{duration}  " +
+                $"worth {activity.PerformanceAgainst(duration):0.00} so far");
+            if (_controller.GetCommitment(_entity.ID) is { } commitment)
+                lines.Add($"  {commitment.Explain()}");
+        }
+        else
+        {
+            lines.Add("  Between things");
+        }
+
+        lines.Add(string.Empty);
         lines.Add("── Recent Decisions ──");
         var history = _controller.GetDecisionHistory(_entity.ID);
         if (history.Count == 0)

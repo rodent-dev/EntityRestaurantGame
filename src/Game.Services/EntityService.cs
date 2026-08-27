@@ -130,6 +130,39 @@ public class EntityService
     public void ApplyStatusWeights(Entity actor, List<ActionCandidate> candidates) =>
         StatusWeightCalculator.Apply(actor, candidates);
 
+    // ── Focus ───────────────────────────────────────────────────────────
+
+    /// <summary>Never less than this much of yourself, however bad it gets.</summary>
+    public const double FocusFloor = 0.25;
+
+    /// <summary>Above this on a need, being alive costs your work nothing.</summary>
+    public const double FocusComfortBand = 0.50;
+
+    /// <summary>
+    /// How much of themselves an entity brings to one beat, <see cref="FocusFloor"/>
+    /// to 1. What a long action banks as <see cref="Activity.Progress"/>.
+    /// </summary>
+    /// <remarks>
+    /// The load-bearing idea: being wrecked degrades OUTPUT PER BEAT, it does not
+    /// reduce the number of beats spent. A starving cook still stands the whole
+    /// shift and simply banks less of it, so the shift resolves badly and pays
+    /// badly — which is a consequence the sim can show, where "skips work when
+    /// hungry" is just an absence.
+    /// <para>
+    /// Worst-of rather than a sum, and against the same 0.50 comfort line
+    /// <see cref="StatusWeightCalculator"/> uses: one thing being badly wrong is
+    /// what wrecks concentration, and three mild complaints are not a crisis. It
+    /// reads the needs generically, so a need added later is felt here for free.
+    /// </para>
+    /// </remarks>
+    public static double Focus(Entity actor)
+    {
+        double health = actor.GetMaxHealth() <= 0 ? 1 : actor.GetCurrentHealth() / actor.GetMaxHealth();
+        double worst = Math.Min(actor.Needs.HungerRatio, Math.Min(actor.Needs.MoodRatio, health));
+        double shortfall = Math.Clamp((FocusComfortBand - worst) / FocusComfortBand, 0, 1);
+        return FocusFloor + (1 - FocusFloor) * (1 - shortfall);
+    }
+
     /// <summary>
     /// Does this candidate answer the whisper? Both named parts must agree,
     /// and an unset part is a wildcard: action-only nudges whoever the sim
@@ -205,25 +238,33 @@ public class EntityService
     }
 
     /// <summary>Mood fallout of an executed action, keyed off action keywords.</summary>
-    public void ApplyMoodFallout(Entity actor, ActionCandidate selected)
+    public void ApplyMoodFallout(Entity actor, ActionCandidate selected) =>
+        ApplyMoodFallout(actor, selected.Action, selected.Target);
+
+    /// <summary>
+    /// The same fallout, addressed by verb and target rather than by candidate.
+    /// A long action settles beats after the candidate that started it stopped
+    /// being true, so the settlement path takes this overload.
+    /// </summary>
+    public void ApplyMoodFallout(Entity actor, IAction action, Entity target)
     {
-        var keywords = selected.Action.Keywords;
-        bool isSelfTargeted = actor.ID == selected.Target.ID;
+        var keywords = action.Keywords;
+        bool isSelfTargeted = actor.ID == target.ID;
 
         // Violent actions hurt the target's mood heavily
         if (keywords.Contains("Violent"))
-            selected.Target.Needs.AdjustMood(-10);
+            target.Needs.AdjustMood(-10);
         // Aggressive but non-violent (e.g. Grapple) is less harsh
         else if (keywords.Contains("Aggressive"))
-            selected.Target.Needs.AdjustMood(-6);
+            target.Needs.AdjustMood(-6);
 
         // Supportive actions lift the target's mood
         if (keywords.Contains("Supportive"))
-            selected.Target.Needs.AdjustMood(4);
+            target.Needs.AdjustMood(4);
 
         // Diplomatic actions are a mild positive for the target
         if (keywords.Contains("Diplomatic"))
-            selected.Target.Needs.AdjustMood(3);
+            target.Needs.AdjustMood(3);
 
         // Greedy self-targeted actions (eating) satisfy the actor
         if (isSelfTargeted && keywords.Contains("Greedy"))

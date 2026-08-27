@@ -43,12 +43,21 @@ public class EntityController
     private readonly Dictionary<string, Queue<DecisionRecord>> _decisionHistory = new();
     private readonly List<GameSignal> _signals = new();
     private readonly Dictionary<string, Queue<EntityLogEntry>> _entityLogs = new();
+    private readonly Dictionary<string, Commitment> _commitments = new();
+    private readonly EventDistributor _events = new();
 
     public List<Entity> ActiveEntities { get; } = new();
     public List<Entity> InactiveEntities { get; } = new();
 
     public int CurrentTick => _clock.Tick;
     public IReadOnlyList<GameSignal> Signals => _signals;
+
+    /// <summary>
+    /// The world's public address system, and the typed ledger behind it.
+    /// Subscribe reactions here at composition time; read the ledger for the
+    /// machine-readable form of everything the signal log renders as prose.
+    /// </summary>
+    public EventDistributor Events => _events;
 
     /// <summary>Monotonic count of every signal ever announced — lets UIs spot
     /// new arrivals even though the log itself trims to its cap.</summary>
@@ -205,6 +214,10 @@ public class EntityController
             throw new InvalidOperationException($"Entity '{entity.DisplayName}' is not active.");
         InactiveEntities.Add(entity);
 
+        // Whatever they were in the middle of stops being in the middle of
+        // anything. Not settled — dying at your bench is not a shift worked.
+        Abandon(entity);
+
         // Lazy-cancel: the event still reaches its bucket but no-ops on Fire.
         if (_decisionEvents.Remove(entity.ID, out var ev))
             ev.Cancelled = true;
@@ -227,7 +240,8 @@ public class EntityController
             if (_entities.ApplyHunger(entity, HungerPerPulse))
             {
                 entity.TakeDamage(StarvationDamage);
-                Announce($"{entity.DisplayName} is starving (-{StarvationDamage:0} HP)", entity);
+                Announce($"{entity.DisplayName} is starving (-{StarvationDamage:0} HP)", entity,
+                    kind: EventKind.Need, keywords: ["Starving", "Harm"]);
             }
         }
         SweepDeaths();
@@ -235,19 +249,39 @@ public class EntityController
 
     internal void ActOnce(Entity entity)
     {
-        var candidates = _entities.BuildCandidates(entity, ActiveEntities);
-        if (candidates.Count == 0) return;
-
-        _entities.ApplyBehaviorWeights(entity, candidates);
-        _entities.ApplyStatusWeights(entity, candidates);
-        _entities.ApplyProximityWeights(entity, candidates);
-        _dialog?.ApplySituationWeights(entity, candidates, CurrentTick);
-
         bool stranger = FavoredEntityId != null && !IsOurs(entity);
-        _entities.ApplyInfluence(entity, candidates, stranger, StrangerResistDivisor);
 
-        var selected = _entities.SelectWeighted(candidates);
+        // The challenger: what the weight pipeline offers this beat. Built even
+        // when the entity is already busy, because "is anything worth stopping
+        // for?" cannot be asked without knowing what "anything" is — and asking
+        // it every beat keeps the cost of a beat the same whether the entity is
+        // deciding or working.
+        var candidates = _entities.BuildCandidates(entity, ActiveEntities);
+        ActionCandidate? selected = null;
+
+        if (candidates.Count > 0)
+        {
+            _entities.ApplyBehaviorWeights(entity, candidates);
+            _entities.ApplyStatusWeights(entity, candidates);
+            _entities.ApplyProximityWeights(entity, candidates);
+            _dialog?.ApplySituationWeights(entity, candidates, CurrentTick);
+            _entities.ApplyInfluence(entity, candidates, stranger, StrangerResistDivisor);
+
+            selected = _entities.SelectWeighted(candidates);
+        }
+
+        // Already in the middle of something? Then the question this beat is
+        // whether the challenger is worth walking out for — not what to do next.
+        if (entity.Current is not null && CarryOn(entity, candidates, selected, stranger))
+            return;
+
         if (selected == null) return;
+
+        // Walking out of an activity SETTLES it on the way past, and settling
+        // pays out — an abandoned attack still lands its damage. So the target
+        // the challenger was chosen against may have died a few lines ago.
+        // Committing anyway would spend the next beat discovering the corpse.
+        if (selected.Target.ID != entity.ID && !selected.Target.IsAlive) return;
 
         // Spatial gate: desire is global, reach is local. A far target turns
         // this beat into movement; the intent (influence included) persists
@@ -267,10 +301,6 @@ public class EntityController
             return;
         }
 
-        bool influenced = entity.PendingInfluence is { } inf
-                       && EntityService.MatchesInfluence(selected, inf);
-        entity.PendingInfluence = null;   // consumed once an action actually lands
-
         var item = _entities.SelectItem(entity, selected);
         if (item == null && selected.Action.RequiresItem)
         {
@@ -278,30 +308,13 @@ public class EntityController
             return;
         }
 
-        bool targetWasAlive = selected.Target.ID != entity.ID && selected.Target.IsAlive;
-        selected.Action.Execute(entity, selected.Target, item);
-        if (selected.Action.ActionName == "Idle")
-            _entities.Wander(entity, WanderStep);
+        bool influenced = entity.PendingInfluence is { } inf
+                       && EntityService.MatchesInfluence(selected, inf);
+        entity.PendingInfluence = null;   // consumed once an action actually lands
 
-        // Spent consumables leave the inventory — depleted husks otherwise
-        // linger forever, cluttering loot and food counts.
-        if (item is { UsesRemaining: 0 })
-            entity.Inventory.Remove(item);
-
-        // Loot-on-kill: the killer takes the corpse's belongings. One rule,
-        // two fantasies — hunting (wolf drops meat) and banditry (victim
-        // drops coin) — with zero special cases.
-        if (targetWasAlive && !selected.Target.IsAlive && selected.Target.Inventory.Count > 0)
-        {
-            entity.Inventory.AddRange(selected.Target.Inventory);
-            selected.Target.Inventory.Clear();
-            Announce($"{entity.DisplayName} loots {selected.Target.DisplayName}", entity, selected.Target, loud: true);
-        }
-
-        _entities.ApplyMoodFallout(entity, selected);
         RecordDecision(entity, selected);
+        Begin(entity, selected, item, influenced);
         DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: false));
-        AnnounceDecision(entity, selected, item, influenced);
         FlushDialog();
         SweepDeaths();
 
@@ -309,6 +322,178 @@ public class EntityController
         // nobody ends it enveloping someone else.
         _entities.ResolveOverlaps(ActiveEntities);
     }
+
+    // ── Activities: committing, carrying on, settling ───────────────────
+
+    /// <summary>
+    /// Commit to a candidate and spend this beat on it. An instantaneous verb
+    /// (<see cref="IAction.Duration"/> 1, which is every action that has not
+    /// asked for more) begins and settles inside this one call, so it behaves
+    /// exactly as it did before activities existed.
+    /// </summary>
+    private void Begin(Entity entity, ActionCandidate selected, IItem? item, bool influenced)
+    {
+        var activity = new Activity
+        {
+            ActionName = selected.Action.ActionName,
+            TargetId = selected.Target.ID,
+            StartedTick = CurrentTick,
+            Item = item,
+            Influenced = influenced,
+        };
+        entity.Current = activity;
+        Advance(entity, activity, selected.Action, selected.Target);
+    }
+
+    /// <summary>
+    /// Spend one beat on an activity: the clock always moves, the score only
+    /// moves if the beat counted and the actor had anything to give it.
+    /// </summary>
+    private void Advance(Entity entity, Activity activity, IAction action, Entity target)
+    {
+        activity.Elapsed++;
+        if (action.Sustain(entity, target, activity.Item))
+            activity.Progress += EntityService.Focus(entity);
+
+        if (activity.IsComplete(action.Duration))
+            Settle(entity, activity, action, target, completed: true);
+    }
+
+    /// <summary>
+    /// Spend the beat on whatever the entity is already in the middle of — or
+    /// decide it is not worth staying for. Returns true when the beat was spent
+    /// here and the caller has nothing left to do.
+    /// </summary>
+    private bool CarryOn(Entity entity, List<ActionCandidate> candidates,
+        ActionCandidate? challenger, bool stranger)
+    {
+        var current = entity.Current!;
+        var action = entity.Actions.GetAction(current.ActionName);
+        var target = ActiveEntities.FirstOrDefault(e => e.ID == current.TargetId);
+
+        // The verb or its subject went away underneath us. Nothing to settle:
+        // an activity whose target is gone was neither finished nor walked out
+        // on, and paying it out either way would be inventing a result.
+        if (action is null || target is null || !target.IsAlive)
+        {
+            Abandon(entity);
+            return false;
+        }
+
+        // The pipeline landing on what you are ALREADY doing is agreement, not
+        // an interruption. Restarting would reset the progress and quietly cap
+        // every long action's performance at whatever one beat can earn.
+        bool sameThing = challenger is not null
+            && challenger.Action.ActionName == current.ActionName
+            && challenger.Target.ID == current.TargetId;
+
+        Commitment? commitment = null;
+        if (challenger is not null && !sameThing)
+        {
+            commitment = CommitmentCalculator.Weigh(
+                entity, action, current, CurrentTick, StrangerResistDivisor, stranger);
+            _commitments[entity.ID] = commitment;
+
+            if (commitment.Total < challenger.TotalWeight)
+            {
+                Settle(entity, current, action, target, completed: false);
+                FlushDialog();
+                SweepDeaths();
+                return false;                  // the beat goes to whatever won
+            }
+        }
+
+        Advance(entity, current, action, target);
+
+        RecordDecision(entity, action.ActionName, target.DisplayName,
+            ActionWeightSource.Commitment.ToString());
+        DecisionObserver?.Invoke(new DecisionTrace(
+            CurrentTick, entity, candidates, CarriedOn(action, target, commitment), Deferred: false));
+
+        FlushDialog();
+        SweepDeaths();
+        _entities.ResolveOverlaps(ActiveEntities);
+        return true;
+    }
+
+    /// <summary>
+    /// Settle a run: pay it out in proportion to how well it went, tidy up
+    /// after it, and announce it.
+    /// </summary>
+    /// <remarks>
+    /// Rewards only. Whatever <see cref="IAction.Sustain"/> spent along the way
+    /// is already gone and is never refunded or scaled — walk out of a shift
+    /// three quarters through and you are still three quarters tired. That
+    /// asymmetry is the only reason abandoning something has a cost worth
+    /// weighing.
+    /// </remarks>
+    private void Settle(Entity entity, Activity activity, IAction action, Entity target, bool completed)
+    {
+        entity.Current = null;
+        _commitments.Remove(entity.ID);
+
+        double performance = activity.PerformanceAgainst(action.Duration);
+        bool targetWasAlive = target.ID != entity.ID && target.IsAlive;
+
+        action.Resolve(entity, target, activity.Item, performance);
+        if (action.ActionName == "Idle")
+            _entities.Wander(entity, WanderStep);
+
+        // Spent consumables leave the inventory — depleted husks otherwise
+        // linger forever, cluttering loot and food counts.
+        if (activity.Item is { UsesRemaining: 0 })
+            entity.Inventory.Remove(activity.Item);
+
+        // Loot-on-kill: the killer takes the corpse's belongings. One rule,
+        // two fantasies — hunting (wolf drops meat) and banditry (victim
+        // drops coin) — with zero special cases.
+        if (targetWasAlive && !target.IsAlive && target.Inventory.Count > 0)
+        {
+            entity.Inventory.AddRange(target.Inventory);
+            target.Inventory.Clear();
+            Announce($"{entity.DisplayName} loots {target.DisplayName}", entity, target, loud: true,
+                keywords: [.. action.Keywords]);
+        }
+
+        _entities.ApplyMoodFallout(entity, action, target);
+        AnnounceRun(entity, action, target, activity, completed, performance);
+    }
+
+    /// <summary>
+    /// Drop an activity without settling it — the run's subject stopped
+    /// existing, or its owner did. Distinct from walking out, which is a
+    /// decision and gets paid for whatever it managed.
+    /// </summary>
+    private void Abandon(Entity entity)
+    {
+        entity.Current = null;
+        _commitments.Remove(entity.ID);
+    }
+
+    /// <summary>
+    /// A synthetic candidate standing for "carried on", handed to the decision
+    /// observer so a beat spent working counts as a beat spent working.
+    /// </summary>
+    /// <remarks>
+    /// Without it a long action would appear in the census once per RUN rather
+    /// than once per beat, and the one number balance work actually needs —
+    /// where the beats went — would understate it by the whole duration.
+    /// </remarks>
+    private static ActionCandidate CarriedOn(IAction action, Entity target, Commitment? commitment)
+    {
+        var candidate = new ActionCandidate(action, target);
+        candidate.Weights.Add(new ActionWeight
+        {
+            Weight = commitment?.Total ?? CommitmentCalculator.Baseline,
+            Source = ActionWeightSource.Commitment,
+        });
+        return candidate;
+    }
+
+    /// <summary>Why this entity stayed on task the last time it was asked.</summary>
+    public Commitment? GetCommitment(string entityId) =>
+        _commitments.TryGetValue(entityId, out var c) ? c : null;
+
 
     /// <summary>
     /// Publish what the dialog pipeline produced this beat: rendered lines go
@@ -320,7 +505,7 @@ public class EntityController
         if (_dialog == null) return;
 
         foreach (var (line, actor, other, loud) in _dialog.DrainSignals())
-            Announce(line, actor, other, loud);
+            Announce(line, actor, other, loud, kind: EventKind.Speech);
 
         foreach (var (owner, referent) in _dialog.DrainSpikes())
             _wheel.ScheduleIn(new WantSpikeEvent(this, owner, referent), WantSpikeEvent.DecayInterval);
@@ -334,7 +519,8 @@ public class EntityController
             // never lists a corpse and leadership passes on.
             _parties?.Remove(dead);
             MakeInactive(dead);   // also lazy-cancels its decision event
-            Announce($"{dead.DisplayName} has died", dead, loud: true);
+            Announce($"{dead.DisplayName} has died", dead, loud: true,
+                kind: EventKind.Death, keywords: ["Death"]);
         }
     }
 
@@ -366,34 +552,92 @@ public class EntityController
         if (history.Count > 3) history.Dequeue();
     }
 
-    private void AnnounceDecision(Entity actor, ActionCandidate selected, IItem? item, bool influenced)
+    /// <summary>
+    /// Announce a finished run of an action.
+    /// </summary>
+    /// <remarks>
+    /// Fires on settlement rather than on commitment, so an instantaneous verb
+    /// produces exactly the line it always did. A run that took more than one
+    /// beat also carries its score, because for those the interesting fact is
+    /// not that it happened but how well it went — and "cut short" is the shape
+    /// walking out takes in the log.
+    /// </remarks>
+    private void AnnounceRun(Entity actor, IAction action, Entity target, Activity activity,
+        bool completed, double performance)
     {
-        if (selected.Action.ActionName == "Idle") return;      // resting isn't news
-        if (selected.Action.ActionName == "Converse") return;  // dialog renders its own lines
+        if (action.ActionName == "Idle") return;      // resting isn't news
+        if (action.ActionName == "Converse") return;  // dialog renders its own lines
 
-        bool self = actor.ID == selected.Target.ID;
-        string target = self ? "" : $" → {selected.Target.DisplayName}";
-        string with = item != null ? $" ({item.ItemName})" : "";
-        string nudge = influenced ? "  [influenced]" : "";
+        bool self = actor.ID == target.ID;
+        string aimedAt = self ? "" : $" → {target.DisplayName}";
+        string with = activity.Item != null ? $" ({activity.Item.ItemName})" : "";
+        string nudge = activity.Influenced ? "  [influenced]" : "";
+        string score = action.Duration <= 1
+            ? ""
+            : completed ? $" ({performance:0.00})" : $", cut short ({performance:0.00})";
+
         // Tiering: acting ON someone else (attack, grapple, gift) is a distinct
         // interaction — broadcast it. Self-maintenance (consume, work, defend)
         // stays dossier-only.
-        Announce($"{actor.DisplayName}: {selected.Action.ActionName}{target}{with}{nudge}",
-            actor, self ? null : selected.Target, loud: !self);
+        Announce($"{actor.DisplayName}: {action.ActionName}{aimedAt}{with}{score}{nudge}",
+            actor, self ? null : target, loud: !self,
+            actionName: action.ActionName, keywords: [.. action.Keywords]);
     }
 
-    /// <summary>Publish to the world log, and to the personal logs of anyone
-    /// involved — <paramref name="actor"/> is the entry's protagonist,
-    /// <paramref name="other"/> just lived it. <paramref name="loud"/> is the
-    /// broadcast tier: only loud entries earn a speech bubble.</summary>
-    internal void Announce(string message, Entity? actor = null, Entity? other = null, bool loud = false)
+    /// <summary>
+    /// Publish a fact to the world: it goes in the typed ledger, gets rendered
+    /// into the signal log, reaches the personal log of everyone it was ABOUT,
+    /// and is offered to everyone standing near enough to notice.
+    /// </summary>
+    /// <remarks>
+    /// This is the one door into the ledger, which is why every parameter past
+    /// the message has a default — the twenty-odd existing call sites keep
+    /// working unchanged and get a typed row for free, while the ones that know
+    /// something worth matching on say so.
+    /// <para>
+    /// Witnesses reach the REACTIONS unconditionally but only reach the LOGS
+    /// when the event is loud. Noticing and writing it down are different
+    /// thresholds: a personal log capped at thirty entries would otherwise fill
+    /// with everything anyone did nearby, and the dossier is the one surface
+    /// where noise costs the player something.
+    /// </para>
+    /// </remarks>
+    internal void Announce(string message, Entity? actor = null, Entity? other = null,
+        bool loud = false, EventKind kind = EventKind.Action,
+        string? actionName = null, IReadOnlyList<string>? keywords = null,
+        IReadOnlyList<string>? objectIds = null)
     {
-        _signals.Add(new GameSignal(CurrentTick, message));
+        var worldEvent = new WorldEvent
+        {
+            Tick = CurrentTick,
+            Kind = kind,
+            ActorId = actor?.ID,
+            ParticipantIds = other is not null && other.ID != actor?.ID ? [other.ID] : [],
+            ActionName = actionName,
+            Keywords = keywords ?? [],
+            ObjectIds = objectIds ?? [],
+            Where = (actor ?? other)?.Position ?? System.Numerics.Vector3.Zero,
+            Message = message,
+            Loud = loud,
+        };
+        Publish(worldEvent);
+    }
+
+    /// <summary>
+    /// Publish a fact assembled by the caller. The richer door; everything
+    /// <see cref="Announce"/> can express, plus a group.
+    /// </summary>
+    public void Publish(WorldEvent worldEvent)
+    {
+        _signals.Add(new GameSignal(worldEvent.Tick, worldEvent.Message));
         TotalSignals++;
         if (_signals.Count > SignalLogCap) _signals.RemoveAt(0);
 
-        WriteEntityLog(actor, message, asActor: true, loud);
-        if (other?.ID != actor?.ID) WriteEntityLog(other, message, asActor: false, loud);
+        foreach (var (entity, how) in _events.Publish(worldEvent, ActiveEntities))
+        {
+            if (how == Perception.Witness && !worldEvent.Loud) continue;
+            WriteEntityLog(entity, worldEvent.Message, asActor: how == Perception.Actor, worldEvent.Loud);
+        }
     }
 
     private void WriteEntityLog(Entity? entity, string message, bool asActor, bool loud)

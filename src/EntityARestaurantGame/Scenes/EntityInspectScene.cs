@@ -81,6 +81,17 @@ public sealed class EntityInspectScene : Scene
         r.DrawText(font, $"Hunger {_entity.Needs.Hunger}  Mood {_entity.Needs.Mood}", x, y, Body);
         y += line;
 
+        // What they are in the middle of. Only long actions ever leave one
+        // standing, so this line appears exactly when there is something the
+        // player could not otherwise have known.
+        if (_entity.Current is { } activity)
+        {
+            int duration = _entity.Actions.GetAction(activity.ActionName)?.Duration ?? 1;
+            r.DrawText(font, $"{activity.ActionName} {activity.Elapsed}/{duration} " +
+                $"({activity.PerformanceAgainst(duration):0.00})", x, y, Body);
+            y += line;
+        }
+
         // Standing: which band, and how they feel about us. The two facts that
         // decide whether asking them along is worth a beat.
         string band = _controller.Parties?.PartyOf(_entity)?.Name ?? "unaffiliated";

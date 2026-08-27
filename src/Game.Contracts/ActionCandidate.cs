@@ -28,5 +28,12 @@ public enum ActionWeightSource
     Relationship,
     Status,
     Situation,
-    PlayerInfluence
+    PlayerInfluence,
+
+    /// <summary>
+    /// Not a weight the pipeline applied — the incumbent activity's case for
+    /// being left alone, standing in for the winner on a beat nobody chose
+    /// anything. See <see cref="Commitment"/>.
+    /// </summary>
+    Commitment
 }

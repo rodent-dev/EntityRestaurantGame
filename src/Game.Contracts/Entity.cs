@@ -47,6 +47,17 @@ public class Entity
 
     public Influence? PendingInfluence { get; set; }
 
+    /// <summary>
+    /// What this entity is in the middle of, or null between commitments.
+    /// </summary>
+    /// <remarks>
+    /// Only long actions ever leave one standing here: an instantaneous verb
+    /// begins and settles inside a single beat, so it is never observed. The
+    /// controller owns starting, advancing and settling it — see
+    /// <see cref="Activity"/>.
+    /// </remarks>
+    public Activity? Current { get; set; }
+
     public bool IsAlive => Stats.Health.CurrentHealth > 0;
 
     public Entity()

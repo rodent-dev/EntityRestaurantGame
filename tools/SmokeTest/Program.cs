@@ -4,6 +4,7 @@
 // only owns the exercise script.
 using EntityARestaurantGame.World;
 using Game.Contracts;
+using Game.Services;
 
 var world = WorldBuilder.BuildDefault();
 var controller = world.Controller;
@@ -62,3 +63,48 @@ Console.WriteLine();
 Console.WriteLine("-- last 25 signals --");
 foreach (var s in controller.Signals.TakeLast(25))
     Console.WriteLine($"t{s.Tick,5}  {s.Message}");
+
+// 4. The event spine: every announcement is now a typed row with an audience,
+//    so the check that matters is whether anyone who was NOT involved heard
+//    anything. A world where only actor and target ever hear is the thing the
+//    distributor exists to end.
+Console.WriteLine();
+Console.WriteLine("-- world events: the typed ledger --");
+var ledger = controller.Events.Ledger;
+Console.WriteLine($"{ledger.Count} rows held (of {controller.Events.TotalPublished} published)");
+foreach (var group in ledger.GroupBy(e => e.Kind).OrderByDescending(g => g.Count()))
+    Console.WriteLine($"  {group.Key,-10} {group.Count(),4}");
+
+var events = controller.Events;
+Console.WriteLine($"  reached: {events.ReachedActors} actors, {events.ReachedParticipants} " +
+    $"participants, {events.ReachedWitnesses} witnesses (radius {EventDistributor.WitnessRadius:0}m)");
+Console.WriteLine($"  {ledger.Count(e => e.Loud)} of the held rows were loud enough to write down.");
+
+var roster = controller.ActiveEntities.Concat(controller.InactiveEntities).ToList();
+
+Console.WriteLine();
+Console.WriteLine("-- dossiers: how much of each log is other people's business --");
+foreach (var e in roster)
+{
+    var log = controller.GetLog(e.ID);
+    int asActor = log.Count(l => l.AsActor);
+    Console.WriteLine($"  {e.DisplayName,-8} {log.Count,3} entries  {asActor,3} as protagonist  " +
+        $"{log.Count - asActor,3} as onlooker");
+}
+
+// 5. Long-running actions: a job is a commitment, and what it pays depends on
+//    how much of it got worked. Anything still in flight names its own score.
+Console.WriteLine();
+Console.WriteLine("-- activities in flight --");
+foreach (var e in controller.ActiveEntities.Where(e => e.Current is not null))
+{
+    var activity = e.Current!;
+    var action = e.Actions.GetAction(activity.ActionName);
+    int duration = action?.Duration ?? 1;
+    Console.WriteLine($"  {e.DisplayName,-8} {activity.ActionName,-8} " +
+        $"beat {activity.Elapsed}/{duration}  banked {activity.Progress:0.00}  " +
+        $"on course for {activity.PerformanceAgainst(duration):0.00}  " +
+        $"focus now {EntityService.Focus(e):0.00}");
+    if (controller.GetCommitment(e.ID) is { } commitment)
+        Console.WriteLine($"           {commitment.Explain()}");
+}

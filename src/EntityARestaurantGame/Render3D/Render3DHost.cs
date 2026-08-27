@@ -61,6 +61,14 @@ public sealed class Render3DHost
     private SceneManager? _scenes;
     private readonly DebugHud _hud = new();
     private readonly PartyHud _partyHud = new();
+
+    /// <summary>
+    /// Bottom-edge space the party strip owns, for scenes docked to the left.
+    /// Zero before the fonts load, which is the honest answer — nothing is
+    /// drawn down there yet either.
+    /// </summary>
+    private float PartyReserve =>
+        _font is null || _debugFont is null ? 0f : PartyHud.Footprint(_font, _debugFont);
     private readonly SpeechBubbles _bubbles = new();
     private double _fps;
 
@@ -247,12 +255,17 @@ public sealed class Render3DHost
         if (input.WasPressed(GameAction.ToggleDebug)) _hud.Visible = !_hud.Visible;
 
         // Smoke sequence: open the inspect panel on a live pawn so the
-        // screenshot proves bubbles + dossier over a running sim.
+        // screenshot proves bubbles + dossier over a running sim, and the
+        // whisper wheel on top of it so the screenshot proves that too. The
+        // wheel is an overlay and does not block, so both are visible at once
+        // and the frame shows the whole player surface in one picture.
         if (_smoke && !_smokeInspectShown && _time > 1.0)
         {
             _smokeInspectShown = true;
             var pick = _controller.ActiveEntities.FirstOrDefault();
             if (pick is not null) _scenes.Push(new EntityInspectScene(_controller, pick));
+            if (_controller.FavoredEntity is not null)
+                _scenes.Push(new InfluenceScene(_controller, PartyReserve));
         }
 
         // Smoke close: only after the screenshot exists (10s hard cap in case
@@ -302,7 +315,7 @@ public sealed class Render3DHost
 
             if (input.WasPressed(GameAction.PlayerMenu) && _scenes.Top is not InfluenceScene
                 && _controller.FavoredEntity is { IsAlive: true })
-                _scenes.Push(new InfluenceScene(_controller));
+                _scenes.Push(new InfluenceScene(_controller, PartyReserve));
 
             if (input.WasPressed(GameAction.FocusPawn) && _controller.FavoredEntity is { } fav
                 && _visualPos.TryGetValue(fav.ID, out var favPos))

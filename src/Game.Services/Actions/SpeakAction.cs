@@ -5,7 +5,11 @@ namespace Game.Services.Actions;
 public class SpeakAction : IAction
 {
     public string ActionName => "Speak";
-    public HashSet<string> Keywords { get; } = ["Social", "Diplomatic"];
+    /// <summary><c>Persuasive</c> marks this as a pitch made WITH something —
+    /// the distinguishing keyword that lets a whisper name it rather than the
+    /// general Converse. See RecruitAction for why the three social verbs each
+    /// needed one.</summary>
+    public HashSet<string> Keywords { get; } = ["Social", "Diplomatic", "Persuasive"];
 
     public bool RequiresItem => true;
 

@@ -17,7 +17,12 @@ var merchant = controller.ActiveEntities.First(e => e.ID == "merchant");
 controller.FavoredEntityId = "warrior";
 
 // Nudge the warrior toward eating, like the player would.
-warrior.PendingInfluence = new Influence { TargetActionName = "Consume", Strength = 12 };
+warrior.PendingInfluence = new Influence
+{
+    Keywords = ["SelfPreserving", "Greedy"],   // what Consume is made of
+    Label = "Consume",
+    Strength = 12,
+};
 
 // 1. Beat-stepping: 60 manual beats — enough for talk to surface desires
 //    and for desire to flip the selector into the exchange path.
@@ -48,6 +53,29 @@ foreach (var e in controller.ActiveEntities)
         Console.WriteLine($"  relation {id,-14} {score:+#;-#;0}");
 }
 Console.WriteLine();
+
+// 6. The whisper wheel: what the player can actually reach. The verb set is
+//    fixed at world build, so this tree is stable for a pawn's whole life —
+//    only the leaves (who, what with) churn. Blocked verbs stay listed with
+//    their reason, because a hidden limit reads as a missing feature.
+Console.WriteLine();
+Console.WriteLine("-- whisper wheel --");
+foreach (var pawn in controller.ActiveEntities.Take(2))
+{
+    Console.WriteLine($"  {pawn.DisplayName} ({pawn.EntityType})");
+    foreach (var (category, verbs) in PlayerAffordances.ByCategory(pawn, controller.ActiveEntities))
+    {
+        Console.WriteLine($"    {category.Name,-8} {verbs.Count(v => v.Available)}/{verbs.Count}  — {category.Blurb}");
+        foreach (var verb in verbs)
+        {
+            var items = PlayerAffordances.ItemChoices(pawn, verb.Action, pawn);
+            string leaves = verb.Available
+                ? $"{verb.Targets.Count} target(s)" + (items.Count > 1 ? $", {items.Count} item(s)" : "")
+                : $"BLOCKED — {verb.Reason}";
+            Console.WriteLine($"      {verb.Action.ActionName,-10} [{string.Join(",", verb.Action.Keywords)}]  {leaves}");
+        }
+    }
+}
 
 // 3. Real-time pump: simulate 600s of wall clock in 100ms slices —
 // long enough for food to run out and starvation deaths to land.

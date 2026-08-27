@@ -71,9 +71,11 @@ public class EntityService
         return candidates;
     }
 
-    // Relationship weighting routes by action nature, never action names.
-    private static readonly string[] HostileKeywords = ["Aggressive", "Violent", "Offensive"];
-    private static readonly string[] WarmKeywords = ["Social", "Supportive", "Diplomatic"];
+    // Relationship weighting routes by action nature, never action names. The
+    // lists live in ActionTaxonomy because the player's action wheel sorts by
+    // the same question this asks — one table, two readers, no drift.
+    private static readonly string[] HostileKeywords = ActionTaxonomy.Hostile;
+    private static readonly string[] WarmKeywords = ActionTaxonomy.Warm;
 
     public void ApplyBehaviorWeights(Entity actor, List<ActionCandidate> candidates)
     {
@@ -171,8 +173,7 @@ public class EntityService
     /// influenced, so the two can never drift apart.
     /// </summary>
     public static bool MatchesInfluence(ActionCandidate candidate, Influence influence) =>
-        (string.IsNullOrEmpty(influence.TargetActionName)
-            || candidate.Action.ActionName == influence.TargetActionName)
+        ActionTaxonomy.Answers(candidate.Action, influence.Keywords)
         && (influence.TargetEntityId is null
             || candidate.Target.ID == influence.TargetEntityId);
 
@@ -221,11 +222,28 @@ public class EntityService
         return candidates.Last();
     }
 
-    /// <summary>Picks a random viable item for the selected action, or null.</summary>
-    public IItem? SelectItem(Entity actor, ActionCandidate selected)
+    /// <summary>
+    /// Picks a viable item for the selected action, or null. A whisper that
+    /// named one gets it when it is actually viable this beat.
+    /// </summary>
+    /// <remarks>
+    /// The named item is honoured rather than enforced. A bid for the kitchen
+    /// knife against someone it cannot be used on falls back to the ordinary
+    /// roll instead of failing the beat — the whisper is a preference, and an
+    /// impractical preference should cost nothing but its own effect.
+    /// </remarks>
+    public IItem? SelectItem(Entity actor, ActionCandidate selected, Influence? influence = null)
     {
         var items = selected.Action.GetViableItems(actor, selected.Target);
-        return items.Count > 0 ? items[_rng.Next(items.Count)] : null;
+        if (items.Count == 0) return null;
+
+        if (influence?.ItemId is { } wanted)
+        {
+            foreach (var item in items)
+                if (item.ItemId == wanted) return item;
+        }
+
+        return items[_rng.Next(items.Count)];
     }
 
     // ── Needs ───────────────────────────────────────────────────────────

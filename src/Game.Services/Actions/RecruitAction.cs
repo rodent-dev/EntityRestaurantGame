@@ -23,7 +23,14 @@ public sealed class RecruitAction : IAction
     public RecruitAction(PartyService parties) => _parties = parties;
 
     public string ActionName => "Recruit";
-    public HashSet<string> Keywords { get; } = ["Social", "Diplomatic"];
+    /// <summary>
+    /// <c>Binding</c> is what separates asking someone to JOIN from ordinary
+    /// talk. Converse and Speak are also Social+Diplomatic, so without a third
+    /// keyword a whisper could not tell the three apart — and the general verb
+    /// staying broad while the specific one narrows is the whole point of
+    /// matching on keyword supersets.
+    /// </summary>
+    public HashSet<string> Keywords { get; } = ["Social", "Diplomatic", "Binding"];
 
     public bool RequiresItem => false;
 

@@ -301,7 +301,7 @@ public class EntityController
             return;
         }
 
-        var item = _entities.SelectItem(entity, selected);
+        var item = _entities.SelectItem(entity, selected, entity.PendingInfluence);
         if (item == null && selected.Action.RequiresItem)
         {
             DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: true));

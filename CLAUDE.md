@@ -21,6 +21,8 @@ minds, and dialog inside a restaurant world, rendered either as a console UI
 - `specs/implemented/Activities_And_Events.md` — long-running actions (a job is
   a commitment paid on performance) and the event distributor (who noticed
   what); both ported from the sibling Luna project
+- `specs/implemented/Action_Wheel.md` — the player's verb surface: keyword-
+  addressed whispers, shared taxonomy rings, blocked entries with reasons
 
 Specs are filed by state: `specs/active/` (designed, not yet built),
 `specs/implemented/` (shipped — reference for how it works), `specs/archive/`
@@ -73,6 +75,10 @@ The `old/` archived snapshots were removed on 2026-07-30; they remain on the
   `CommitmentCalculator` prices staying; the controller compares it against the
   challenger's weight. Folding the incumbent into the weighted roll makes
   abandonment compound to a certainty over the duration.
+- **The player's whisper is keyword-addressed.** `Influence.Keywords` comes
+  off the verb the player picked; `ActionTaxonomy.Answers` matches a candidate
+  when it carries all of them. Never reintroduce name matching — that is what
+  made the action wheel impossible.
 - **Announcements are typed facts with an audience.** `Announce`/`Publish` build
   a `WorldEvent` and the `EventDistributor` decides who noticed. Reactions match
   `WorldEvent.Keywords`, never `ActionName`.

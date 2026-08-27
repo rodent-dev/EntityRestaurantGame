@@ -263,6 +263,7 @@ flowchart LR
 | Event spine / distributor | ✅ 2026-08-26 — typed `WorldEvent` ledger behind every announce, audience tiers actor/participant/witness (12m), `IEventReaction` seam. Witnesses reach reactions always, logs only when loud | SmokeTest: 293 witness slots reached in a 3-entity world |
 | Dialog / minds / desires | ✅ Implemented (see specs/implemented/Dialog_Implementation_Map.md) | console MindScreen |
 | Influence / rumor (player verbs) | ✅ Implemented | console screens |
+| Action wheel (player verb surface) | ✅ 2026-08-26 — whisper is keyword-addressed, not name-addressed; `ActionTaxonomy` rings (Social/Combat/Self/Labor/Move) shared with relationship weighting; `PlayerAffordances` keeps blocked verbs visible with a reason; `Influence.ItemId` makes "with the kitchen knife" sayable. See specs/implemented/Action_Wheel.md | 3D smoke screenshot; SmokeTest wheel dump; soak byte-identical |
 | Console UI (9 screens) | ✅ Working — now the debug fallback | default run path |
 | 3D window/camera/meshes/OBJ | ✅ Working | smoke screenshot |
 | Rebindable input | ✅ Working | bindings.json |

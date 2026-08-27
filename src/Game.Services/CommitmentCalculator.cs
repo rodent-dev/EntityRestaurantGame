@@ -148,8 +148,7 @@ public static class CommitmentCalculator
     /// </summary>
     public static bool AnswersWhisper(IAction action, Activity activity, Influence influence)
     {
-        bool actionOk = string.IsNullOrEmpty(influence.TargetActionName)
-                        || influence.TargetActionName == action.ActionName;
+        bool actionOk = ActionTaxonomy.Answers(action, influence.Keywords);
         bool targetOk = influence.TargetEntityId is null
                         || influence.TargetEntityId == activity.TargetId;
         return actionOk && targetOk;

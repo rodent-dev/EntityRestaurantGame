@@ -32,7 +32,7 @@ public class InfluenceScreen : IScreen
         lines.Add(string.Empty);
 
         if (_entity.PendingInfluence is { } existing)
-            lines.Add($"  ⚠  Pending influence already set: {existing.TargetActionName} (+{existing.Strength}) — selecting below replaces it.");
+            lines.Add($"  ⚠  Pending influence already set: {existing.Label} (+{existing.Strength}) — selecting below replaces it.");
 
         renderer.DrawPanel(Title, lines);
 
@@ -53,22 +53,26 @@ public class InfluenceScreen : IScreen
         return ScreenAction.Stay;
     }
 
-    private List<MenuOption> BuildOptions()
-    {
-        var actionNames = _entity.Actions.GetAllActions().Select(a => a.ActionName).ToList();
-        return actionNames.Select(name => new MenuOption
+    /// <summary>
+    /// The debug fallback stays a flat list on purpose — the ringed wheel lives
+    /// in the 2D interface (Scenes/InfluenceScene). What it shares is the
+    /// CONTRACT: the whisper carries the verb's keywords, never its name.
+    /// </summary>
+    private List<MenuOption> BuildOptions() =>
+        _entity.Actions.GetAllActions().Select(action => new MenuOption
         {
-            Label = $"Nudge toward {name}  (+{InfluenceStrength} weight)",
+            Label = $"Nudge toward {action.ActionName}  (+{InfluenceStrength} weight)",
             Execute = () =>
             {
                 _entity.PendingInfluence = new Influence
                 {
-                    TargetActionName = name,
+                    Keywords = [.. action.Keywords],
                     Strength = InfluenceStrength,
-                    Source = "Player"
+                    Source = "Player",
+                    Label = action.ActionName,
                 };
-                return ScreenAction.Push(new InfluenceResultScreen(_entity, name, InfluenceStrength));
+                return ScreenAction.Push(
+                    new InfluenceResultScreen(_entity, action.ActionName, InfluenceStrength));
             }
         }).ToList();
-    }
 }

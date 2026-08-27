@@ -22,11 +22,13 @@ src/
 ├── Game.Contracts/        # IDENTITIES — Entity, EntityNeeds, BehaviorModule, IAction,
 │                          #   ActionCandidate, Influence, DecisionRecord, GameSignal,
 │                          #   Activity (a run in progress), Commitment,
-│                          #   WorldEvent + IEventReaction (the typed ledger row)
+│                          #   WorldEvent + IEventReaction (the typed ledger row),
+│                          #   ActionTaxonomy (the keyword vocabulary + player rings)
 ├── Game.Services/         # HOW — EntityService (candidates, weights, selection, needs,
 │                          #   mood fallout, movement, Focus), StatusWeightCalculator,
 │                          #   CommitmentCalculator (is anything worth stopping for),
 │                          #   EventDistributor (who noticed what),
+│                          #   PlayerAffordances (the curated verb surface + reasons),
 │                          #   standard Actions/ and item Effects/
 └── EntityARestaurantGame/ # THE GAME — Program (composition root), EntityController
                            #   (WHEN: owns clock/wheel/rosters/signal log),
@@ -80,6 +82,12 @@ Two rules that cut across the layering, both landed 2026-08-26 — see
   instantaneous and behaves exactly as before. The *run* is `Entity.Current`
   (state, in Contracts); the *decision to stay* is `CommitmentCalculator`
   (logic, in Services); *begin/advance/settle* is the controller (timing).
+- **The player addresses the sim in keywords, never action names.**
+  `Influence` carries the keywords of whatever verb the player pointed at, and
+  a candidate answers it when its action carries all of them
+  (`ActionTaxonomy.Answers`). The rings the wheel shows and the hostile/warm
+  groups relationship weighting uses are the same table, so a new action lands
+  in the right drawer for free. See `specs/implemented/Action_Wheel.md`.
 - **Every announcement is a typed fact with an audience.** `Announce` builds a
   `WorldEvent` and hands it to `EventDistributor`, which works out who was the
   actor, who was a participant, and who merely witnessed it, then runs the

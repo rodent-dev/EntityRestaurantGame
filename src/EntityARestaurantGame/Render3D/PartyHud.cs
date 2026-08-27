@@ -27,6 +27,20 @@ public sealed class PartyHud
     private static readonly Vector4 HpFill = new(0.45f, 0.70f, 0.35f, 1f);
     private static readonly Vector4 BarBack = new(0.20f, 0.22f, 0.24f, 1f);
 
+    /// <summary>
+    /// How much of the bottom edge this strip occupies, tabs included.
+    /// </summary>
+    /// <remarks>
+    /// Published because scenes docked to the left edge have to know where to
+    /// stop, and the only alternative is a magic number in the scene that
+    /// silently goes wrong the day the font changes. The strip owns this
+    /// measurement; everyone else asks.
+    /// </remarks>
+    public static float Footprint(SpriteFont font, SpriteFont small) =>
+        Pad * 2 + (font.LineHeight + 1) + 6 + (small.LineHeight + 1) * 4 + TabH;
+
+    private const float Pad = 4f;
+
     /// <summary>Where each member's tab landed last frame, for hit-testing.</summary>
     private readonly List<(string Id, float X, float Y, float W)> _tabRects = new();
 
@@ -53,10 +67,10 @@ public sealed class PartyHud
         var members = controller.PlayerPartyMembers;
         if (members.Count == 0) members = [active];
 
-        float pad = 4f;
+        float pad = Pad;
         float line = small.LineHeight + 1;
         float nameLine = font.LineHeight + 1;
-        float panelH = pad * 2 + nameLine + 6 + line * 4;
+        float panelH = Footprint(font, small) - TabH;
         float tabRow = canvasHeight - panelH - TabH;
         float y = canvasHeight - panelH;
 
@@ -88,7 +102,7 @@ public sealed class PartyHud
 
         r.DrawText(small,
             active.PendingInfluence is { } inf
-                ? $"whisper: {inf.TargetActionName}{(inf.TargetEntityId is null ? "" : " ->")} (+{inf.Strength})"
+                ? $"whisper: {inf.Label}{(inf.TargetEntityId is null ? "" : " ->")} (+{inf.Strength})"
                 : "whisper: none",
             tx, y, active.PendingInfluence is null ? Dim : Body);
         y += line;

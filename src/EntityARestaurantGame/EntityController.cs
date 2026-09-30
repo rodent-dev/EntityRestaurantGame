@@ -1,4 +1,4 @@
-using EntityARestaurantGame.Simulation;
+﻿using EntityARestaurantGame.Simulation;
 using Engine.Spatial;
 using Engine.Ticks;
 using Game.Contracts;
@@ -272,7 +272,10 @@ public class EntityController
 
         // Already in the middle of something? Then the question this beat is
         // whether the challenger is worth walking out for — not what to do next.
-        if (entity.Current is not null && CarryOn(entity, candidates, selected, stranger))
+        // The commitment comes back out even when it LOST: a beat that walked
+        // out of a shift is only legible next to the case for staying.
+        Commitment? weighed = null;
+        if (entity.Current is not null && CarryOn(entity, candidates, selected, stranger, out weighed))
             return;
 
         if (selected == null) return;
@@ -296,7 +299,8 @@ public class EntityController
                 EntityService.ReachDistance(entity, selected.Target));
             RecordDecision(entity, "Approach", selected.Target.DisplayName, "Distance");
             Announce($"{entity.DisplayName} moves toward {selected.Target.DisplayName} ({remaining:0.0}m away)", entity);
-            DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: true));
+            DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected,
+                Deferred: true, BeatOutcome.Approached, weighed));
             _entities.ResolveOverlaps(ActiveEntities);
             return;
         }
@@ -304,7 +308,8 @@ public class EntityController
         var item = _entities.SelectItem(entity, selected, entity.PendingInfluence);
         if (item == null && selected.Action.RequiresItem)
         {
-            DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: true));
+            DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected,
+                Deferred: true, BeatOutcome.NoItem, weighed));
             return;
         }
 
@@ -314,7 +319,8 @@ public class EntityController
 
         RecordDecision(entity, selected);
         Begin(entity, selected, item, influenced);
-        DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected, Deferred: false));
+        DecisionObserver?.Invoke(new DecisionTrace(CurrentTick, entity, candidates, selected,
+            Deferred: false, BeatOutcome.Acted, weighed, item));
         FlushDialog();
         SweepDeaths();
 
@@ -365,8 +371,9 @@ public class EntityController
     /// here and the caller has nothing left to do.
     /// </summary>
     private bool CarryOn(Entity entity, List<ActionCandidate> candidates,
-        ActionCandidate? challenger, bool stranger)
+        ActionCandidate? challenger, bool stranger, out Commitment? weighed)
     {
+        weighed = null;
         var current = entity.Current!;
         var action = entity.Actions.GetAction(current.ActionName);
         var target = ActiveEntities.FirstOrDefault(e => e.ID == current.TargetId);
@@ -390,7 +397,7 @@ public class EntityController
         Commitment? commitment = null;
         if (challenger is not null && !sameThing)
         {
-            commitment = CommitmentCalculator.Weigh(
+            commitment = weighed = CommitmentCalculator.Weigh(
                 entity, action, current, CurrentTick, StrangerResistDivisor, stranger);
             _commitments[entity.ID] = commitment;
 
@@ -408,7 +415,8 @@ public class EntityController
         RecordDecision(entity, action.ActionName, target.DisplayName,
             ActionWeightSource.Commitment.ToString());
         DecisionObserver?.Invoke(new DecisionTrace(
-            CurrentTick, entity, candidates, CarriedOn(action, target, commitment), Deferred: false));
+            CurrentTick, entity, candidates, CarriedOn(action, target, commitment),
+            Deferred: false, BeatOutcome.CarriedOn, commitment, current.Item));
 
         FlushDialog();
         SweepDeaths();

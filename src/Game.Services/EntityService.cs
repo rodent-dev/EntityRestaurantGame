@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using Engine.Spatial;
 using Game.Contracts;
 
@@ -205,17 +205,33 @@ public class EntityService
         }
     }
 
+    /// <summary>
+    /// How many lottery tickets a candidate holds in <see cref="SelectWeighted"/>.
+    /// </summary>
+    /// <remarks>
+    /// The floor is the whole reason this is a named function rather than an
+    /// inline <c>Math.Max</c>: a candidate the pipeline scored at zero or below
+    /// still buys a ticket, so a field of rejected options quietly holds real
+    /// probability. Diagnostics have to measure the pool the selector ACTUALLY
+    /// rolls over, and the only way a probe can do that without re-deriving the
+    /// rule — and drifting from it the first time it changes — is to call the
+    /// same function the selector calls. One definition, two readers, the way
+    /// <see cref="ActionTaxonomy"/> is shared with the action wheel.
+    /// </remarks>
+    public static int SelectionMass(ActionCandidate candidate) =>
+        Math.Max(1, candidate.TotalWeight);
+
     public ActionCandidate? SelectWeighted(List<ActionCandidate> candidates)
     {
         if (candidates.Count == 0) return null;
 
-        int total = candidates.Sum(c => Math.Max(1, c.TotalWeight));
+        int total = candidates.Sum(SelectionMass);
         int roll = _rng.Next(0, total);
         int cumulative = 0;
 
         foreach (var candidate in candidates)
         {
-            cumulative += Math.Max(1, candidate.TotalWeight);
+            cumulative += SelectionMass(candidate);
             if (roll < cumulative) return candidate;
         }
 

@@ -1,0 +1,931 @@
+<title>Decision Bench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ── Tokens ──────────────────────────────────────────────────────────────
+   Light is the base; dark redefines only these values, under both the OS
+   media query and the explicit theme stamp. Nothing below this block names
+   a raw colour. */
+:root {
+  color-scheme: light;
+  --surface:      #f2f4f3;
+  --panel:        #fbfcfb;
+  --panel-2:      #eaeeec;
+  --rule:         #d5dcda;
+  --rule-strong:  #b6c1be;
+  --ink:          #10171a;
+  --ink-2:        #46565a;
+  --ink-3:        #74868a;
+  --accent:       #b26a04;   /* sodium — marks the chosen, nothing else */
+  --accent-mark:  #e39a2b;   /* the same signal as a fill, where text contrast is not in play */
+  --accent-wash:  #f6e6c8;
+  --warn:         #b4472a;
+
+  /* Categorical: one hue per weight source, in pipeline order.
+     Validated as a stack-adjacent set for this surface. */
+  --src-Base:            #2a78d6;
+  --src-Behaviors:       #eb6834;
+  --src-Relationship:    #1baf7a;
+  --src-Status:          #4a3aa7;
+  --src-Situation:       #e87ba4;
+  --src-PlayerInfluence: #008300;
+  --src-Commitment:      #74868a;
+
+  --track:        #dfe5e3;
+  --grid:         #e4e9e7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface:      #151b1d;
+    --panel:        #1c2426;
+    --panel-2:      #232d30;
+    --rule:         #2e3a3d;
+    --rule-strong:  #435254;
+    --ink:          #e8eeec;
+    --ink-2:        #a8b8b9;
+    --ink-3:        #7d8f91;
+    --accent:       #f0ae44;
+    --accent-mark:  #f0ae44;
+    --accent-wash:  #3a2d16;
+    --warn:         #e8795a;
+
+    --src-Base:            #3987e5;
+    --src-Behaviors:       #d95926;
+    --src-Relationship:    #199e70;
+    --src-Status:          #9085e9;
+    --src-Situation:       #d55181;
+    --src-PlayerInfluence: #008300;
+    --src-Commitment:      #7d8f91;
+
+    --track:        #273235;
+    --grid:         #232d30;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface:      #151b1d;
+  --panel:        #1c2426;
+  --panel-2:      #232d30;
+  --rule:         #2e3a3d;
+  --rule-strong:  #435254;
+  --ink:          #e8eeec;
+  --ink-2:        #a8b8b9;
+  --ink-3:        #7d8f91;
+  --accent:       #f0ae44;
+  --accent-mark:  #f0ae44;
+  --accent-wash:  #3a2d16;
+  --warn:         #e8795a;
+
+  --src-Base:            #3987e5;
+  --src-Behaviors:       #d95926;
+  --src-Relationship:    #199e70;
+  --src-Status:          #9085e9;
+  --src-Situation:       #d55181;
+  --src-PlayerInfluence: #008300;
+  --src-Commitment:      #7d8f91;
+
+  --track:        #273235;
+  --grid:         #232d30;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: "Familjen Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace; }
+.num  { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+.eyebrow {
+  font-size: 10px; font-weight: 600; letter-spacing: .13em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+.wrap { max-width: 1500px; margin: 0 auto; padding: 0 20px 64px; }
+
+header.bench {
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  padding: 18px 0 16px;
+  margin-bottom: 0;
+}
+.bench-in {
+  max-width: 1500px; margin: 0 auto; padding: 0 20px;
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 28px 40px;
+}
+h1 {
+  margin: 0; font-size: 27px; font-weight: 700; letter-spacing: -.018em;
+  text-wrap: balance; line-height: 1.1;
+}
+h1 .who { color: var(--ink); }
+h1 .kind { color: var(--ink-3); font-weight: 500; }
+.run { color: var(--ink-2); font-size: 12.5px; margin-top: 4px; }
+
+.headline { display: flex; gap: 34px; margin-left: auto; }
+.stat { min-width: 108px; }
+.stat .v { font-size: 25px; font-weight: 600; letter-spacing: -.02em;
+           font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+           line-height: 1.15; display: block; }
+.stat .k { display: block; margin-top: 2px; }
+.stat.flag .v { color: var(--accent); }
+
+/* ── Panels ────────────────────────────────────────────────────────────── */
+
+section.panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 14px 16px 16px;
+}
+.panel-head {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+.panel-head h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: .01em; }
+.panel-head .note { color: var(--ink-3); font-size: 11.5px; margin-left: auto; text-align: right; }
+
+/* ── Timeline ──────────────────────────────────────────────────────────── */
+
+.timeline-wrap { margin: 18px 0 16px; }
+#strip {
+  display: block; width: 100%; height: 108px;
+  cursor: crosshair; touch-action: none;
+  border-radius: 2px;
+}
+#strip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+.lg { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-2);
+      background: none; border: 0; padding: 2px 0; cursor: pointer; font-family: inherit; }
+.lg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lg .sw { width: 11px; height: 11px; border-radius: 2px; flex: none; }
+.lg[aria-pressed="false"] { opacity: .34; }
+.lg[aria-pressed="false"] .sw { background: var(--ink-3) !important; }
+
+/* ── Main grid ─────────────────────────────────────────────────────────── */
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 356px; gap: 16px; align-items: start; }
+@media (max-width: 1080px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.side { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── The field ─────────────────────────────────────────────────────────── */
+
+.field { overflow-x: auto; }
+.field-head, .row {
+  display: grid;
+  grid-template-columns: 190px minmax(240px, 1fr) 58px 74px;
+  gap: 12px; align-items: center;
+  min-width: 620px;
+}
+.field-head {
+  padding-bottom: 6px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--rule);
+}
+.field-head > * { font-size: 10px; font-weight: 600; letter-spacing: .12em;
+                  text-transform: uppercase; color: var(--ink-3); }
+.field-head .r { text-align: right; }
+
+.row {
+  padding: 5px 0 5px 9px;
+  border-left: 3px solid transparent;
+  border-radius: 2px;
+}
+.row + .row { border-top: 1px solid var(--grid); }
+.row:hover { background: var(--panel-2); }
+.row.won { border-left-color: var(--accent-mark); background: var(--accent-wash); }
+.row.won .verb { color: var(--accent); font-weight: 600; }
+
+.label { min-width: 0; }
+.verb { font-size: 12.5px; font-weight: 500; letter-spacing: -.005em;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.verb .arrow { color: var(--ink-3); font-weight: 400; }
+.sub { font-size: 10.5px; color: var(--ink-3); white-space: nowrap;
+       overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+
+.bars { min-width: 0; }
+.stack { position: relative; height: 17px; }
+.zero {
+  position: absolute; top: -1px; bottom: -1px; width: 1px;
+  background: var(--rule-strong);
+}
+.seg {
+  position: absolute; top: 2px; height: 13px;
+  border-radius: 1px;
+}
+.seg.cap-r { border-top-right-radius: 4px; border-bottom-right-radius: 4px; }
+.seg.cap-l { border-top-left-radius: 4px; border-bottom-left-radius: 4px; }
+
+.share { position: relative; height: 5px; margin-top: 3px; background: var(--track); border-radius: 3px; }
+.share i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--ink-3); }
+.share i.floored {
+  background: repeating-linear-gradient(45deg,
+    var(--ink-3) 0 2px, transparent 2px 4px);
+  border: 1px solid var(--ink-3);
+}
+
+.tot { text-align: right; font-size: 13px; font-weight: 500; }
+.tot.neg { color: var(--ink-3); }
+.pct { text-align: right; font-size: 11.5px; color: var(--ink-2); }
+.pct .floormark { color: var(--ink-3); }
+
+/* ── Verdict ───────────────────────────────────────────────────────────── */
+
+.verdict .what { font-size: 20px; font-weight: 600; letter-spacing: -.015em; line-height: 1.2; }
+.verdict .what .arrow { color: var(--ink-3); font-weight: 400; }
+.outcome {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 2px; border: 1px solid var(--rule-strong);
+  color: var(--ink-2); background: var(--panel-2);
+}
+.outcome .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-2); }
+.outcome.acted .dot { background: var(--ink); }
+.outcome.carriedon .dot { background: var(--accent-mark); }
+.outcome.approached .dot { background: var(--ink-3); }
+.outcome.noitem .dot { background: var(--warn); }
+.outcome.noitem { color: var(--warn); border-color: var(--warn); }
+
+.gates { display: flex; flex-direction: column; gap: 0; margin-top: 12px; }
+.gate {
+  display: grid; grid-template-columns: 15px 1fr auto; gap: 9px; align-items: baseline;
+  padding: 7px 0; border-top: 1px solid var(--grid); font-size: 12px;
+}
+.gate .mk { font-family: "IBM Plex Mono", monospace; font-size: 12px; text-align: center; }
+.gate.pass .mk { color: var(--ink-2); }
+.gate.stop .mk { color: var(--warn); }
+.gate.moot { color: var(--ink-3); }
+.gate .g-what { color: var(--ink-2); }
+.gate .g-val { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+               font-size: 11.5px; color: var(--ink); text-align: right; white-space: nowrap; }
+
+.ledger { display: flex; flex-direction: column; }
+.led {
+  display: grid; grid-template-columns: 1fr 48px 46px; gap: 8px; align-items: center;
+  padding: 5px 0; border-top: 1px solid var(--grid); font-size: 12px;
+}
+.led:first-child { border-top: 0; }
+.led .nm { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.led .sw { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.led .n { text-align: right; font-family: "IBM Plex Mono", monospace;
+          font-variant-numeric: tabular-nums; font-size: 11.5px; }
+.led .n.zero { color: var(--ink-3); }
+.led .spark { height: 12px; }
+.led.silent .nm { color: var(--ink-3); }
+.led.silent .sw { background: none !important; border: 1px dashed var(--rule-strong); }
+
+.commit { margin-top: 10px; }
+.commit-bar { position: relative; height: 26px; margin: 10px 0 6px;
+              background: var(--track); border-radius: 2px; overflow: hidden; }
+.commit-bar .half { position: absolute; top: 0; bottom: 0; }
+.commit-bar .stay { left: 0; background: var(--src-Commitment); border-radius: 2px 0 0 2px; }
+.commit-bar .go   { right: 0; background: var(--accent-mark); border-radius: 0 2px 2px 0; }
+.commit-bar .lab { position: absolute; top: 0; bottom: 0; display: flex; align-items: center;
+                   font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+                   color: var(--panel); padding: 0 7px; }
+.commit-bar .lab.r { right: 0; }
+.terms { display: flex; flex-direction: column; }
+.term { display: grid; grid-template-columns: 34px 1fr; gap: 9px; padding: 3px 0;
+        font-size: 11.5px; color: var(--ink-2); border-top: 1px solid var(--grid); }
+.term .w { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums;
+           text-align: right; }
+.term .w.plus { color: var(--ink); }
+.term .w.minus { color: var(--warn); }
+
+.dist { margin-top: 4px; }
+#reach { display: block; width: 100%; height: 46px; }
+
+/* ── Equipment ─────────────────────────────────────────────────────────── */
+
+.kit { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+@media (max-width: 860px) { .kit { grid-template-columns: 1fr; } }
+.kit table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.kit th { text-align: left; font-size: 10px; font-weight: 600; letter-spacing: .12em;
+          text-transform: uppercase; color: var(--ink-3); padding: 0 8px 6px 0;
+          border-bottom: 1px solid var(--rule); }
+.kit th.r, .kit td.r { text-align: right; }
+.kit td { padding: 5px 8px 5px 0; border-bottom: 1px solid var(--grid); vertical-align: top; }
+.kit td.nm { font-weight: 500; white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.chip {
+  font-family: "IBM Plex Mono", monospace; font-size: 9.5px; letter-spacing: .02em;
+  padding: 1px 5px; border-radius: 2px; background: var(--panel-2);
+  color: var(--ink-2); border: 1px solid var(--rule);
+}
+.chip.hit { border-color: var(--accent-mark); color: var(--accent); background: var(--accent-wash); }
+
+/* ── Tooltip ───────────────────────────────────────────────────────────── */
+
+#tip {
+  position: fixed; z-index: 40; pointer-events: none; opacity: 0;
+  transition: opacity .09s linear;
+  background: var(--ink); color: var(--surface);
+  border-radius: 3px; padding: 7px 9px; font-size: 11.5px; line-height: 1.4;
+  max-width: 260px; box-shadow: 0 3px 14px rgba(0,0,0,.24);
+}
+#tip.on { opacity: 1; }
+#tip b { font-weight: 600; }
+#tip .r { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+
+/* ── Reading rail ──────────────────────────────────────────────────────── */
+
+.read {
+  margin: 16px 0 0; padding: 13px 15px;
+  border: 1px solid var(--rule); border-left: 3px solid var(--accent-mark);
+  border-radius: 3px; background: var(--panel);
+  font-size: 12.5px; color: var(--ink-2); max-width: 74ch;
+}
+.read b { color: var(--ink); font-weight: 600; }
+.read + .read { margin-top: 8px; }
+
+.scrub-help { font-size: 11.5px; color: var(--ink-3); margin-top: 6px; }
+kbd {
+  font-family: "IBM Plex Mono", monospace; font-size: 10.5px;
+  border: 1px solid var(--rule-strong); border-bottom-width: 2px; border-radius: 3px;
+  padding: 0 4px; color: var(--ink-2); background: var(--panel-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<header class="bench">
+  <div class="bench-in">
+    <div>
+      <div class="eyebrow" id="stage-line">decision bench</div>
+      <h1><span class="who" id="who">—</span> <span class="kind" id="kind"></span></h1>
+      <div class="run mono" id="run"></div>
+    </div>
+    <div class="headline">
+      <div class="stat"><span class="v" id="h-beats">—</span><span class="k eyebrow">beats watched</span></div>
+      <div class="stat"><span class="v" id="h-field">—</span><span class="k eyebrow">options per beat</span></div>
+      <div class="stat flag"><span class="v" id="h-floor">—</span><span class="k eyebrow">probability from the floor</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="timeline-wrap">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Every beat this entity got</h2>
+        <div class="note">bar height = weight of what won · click or <kbd>←</kbd> <kbd>→</kbd> to scrub</div>
+      </div>
+      <canvas id="strip" tabindex="0" role="slider" aria-label="Beat" aria-valuemin="0"></canvas>
+      <div class="legend" id="outcome-legend" style="margin-top:8px"></div>
+      <div class="scrub-help" id="scrub-help"></div>
+    </section>
+  </div>
+
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 id="field-title">The field</h2>
+        <div class="note" id="field-note"></div>
+      </div>
+      <div class="legend" id="src-legend" style="margin-bottom:10px"></div>
+      <div class="field">
+        <div class="field-head">
+          <div>Verb → target</div>
+          <div>Who pushed, and how hard</div>
+          <div class="r">Weight</div>
+          <div class="r">Share</div>
+        </div>
+        <div id="rows"></div>
+      </div>
+      <p class="read" id="field-read"></p>
+    </section>
+
+    <div class="side">
+      <section class="panel verdict">
+        <div class="panel-head"><h2>The verdict</h2><div class="note" id="v-tick"></div></div>
+        <div class="what" id="v-what">—</div>
+        <div style="margin-top:8px"><span class="outcome" id="v-outcome"><span class="dot"></span><span></span></span></div>
+        <div class="gates" id="v-gates"></div>
+      </section>
+
+      <section class="panel" id="commit-panel" hidden>
+        <div class="panel-head">
+          <h2>Stay, or walk out</h2>
+          <div class="note">a comparison, never a roll</div>
+        </div>
+        <div class="commit" id="commit-body"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>This beat, by source</h2><div class="note">sum of pushes</div></div>
+        <div class="ledger" id="v-ledger"></div>
+      </section>
+
+      <section class="panel dist">
+        <div class="panel-head"><h2>How far away everyone is</h2><div class="note">gap past reach</div></div>
+        <canvas id="reach"></canvas>
+      </section>
+    </div>
+  </div>
+
+  <section class="panel" style="margin-top:16px">
+    <div class="panel-head">
+      <h2>What it can do, and what it wants</h2>
+      <div class="note">standing equipment — unchanged across the run</div>
+    </div>
+    <div class="kit">
+      <div>
+        <div class="eyebrow" style="margin-bottom:7px">Verbs</div>
+        <table><thead><tr><th>Verb</th><th>Keywords</th><th class="r">Beats</th><th class="r">Base</th></tr></thead>
+          <tbody id="verbs"></tbody></table>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:7px">Behaviors</div>
+        <table><thead><tr><th>Trait</th><th>Keywords</th><th class="r">Push</th></tr></thead>
+          <tbody id="behaviors"></tbody></table>
+        <div class="eyebrow" style="margin:16px 0 7px">Lanes of judgement, across the whole run</div>
+        <div class="ledger" id="seams"></div>
+      </div>
+    </div>
+    <p class="read" id="seam-read"></p>
+  </section>
+</div>
+
+<div id="tip" role="tooltip"></div>
+
+<script>
+const DATA = "__PROBE_DATA__";
+</script>
+
+<script>
+(() => {
+  "use strict";
+  const D = DATA, B = D.beats, css = getComputedStyle(document.documentElement);
+  const tok = n => css.getPropertyValue(n).trim();
+  const srcColor = s => tok("--src-" + s) || tok("--ink-3");
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const sign = n => (n > 0 ? "+" : "") + n;
+
+  // Sources that can appear as a weight ON a candidate. Commitment never can —
+  // it is priced against the field, not inside it — so it gets no lane here.
+  const SOURCES = D.sources.filter(s => s !== "Commitment");
+  const OUTCOMES = {
+    Acted:      { label: "Acted",        blurb: "committed and spent the beat on it" },
+    CarriedOn:  { label: "Carried on",   blurb: "stayed with what it was already doing" },
+    Approached: { label: "Walked",       blurb: "wanted it, was too far away" },
+    NoItem:     { label: "Empty-handed", blurb: "wanted it, had nothing to do it with" },
+  };
+  const outcomeInk = o => o === "CarriedOn" ? tok("--accent-mark")
+                        : o === "NoItem"    ? tok("--warn")
+                        : o === "Approached" ? tok("--ink-3")
+                        : tok("--ink");
+
+  let cursor = 0;
+  const muted = new Set();          // sources toggled off in the legend
+
+  // ── Header ─────────────────────────────────────────────────────────────
+  const totalPool  = B.reduce((a, b) => a + b.pool, 0);
+  const totalFloor = B.reduce((a, b) => a + b.floorMass, 0);
+  const avgField   = B.reduce((a, b) => a + b.c.length, 0) / B.length;
+
+  $("stage-line").textContent = "decision bench · " + D.stage;
+  $("who").textContent = D.focus.name;
+  $("kind").textContent = D.focus.type.toLowerCase();
+  $("run").textContent = `world ${D.worldSeed} · sim ${D.simSeed} · ticks ${B[0].t}–${B[B.length - 1].t}`
+    + ` · ${D.population} on stage`;
+  $("h-beats").textContent = B.length;
+  $("h-field").textContent = avgField.toFixed(1);
+  $("h-floor").textContent = (totalFloor * 100 / Math.max(1, totalPool)).toFixed(1) + "%";
+
+  // ── Legends ────────────────────────────────────────────────────────────
+  $("src-legend").innerHTML = SOURCES.map(s =>
+    `<button class="lg" data-src="${s}" aria-pressed="true">`
+    + `<span class="sw" style="background:${srcColor(s)}"></span>${esc(s)}</button>`).join("")
+    + `<span class="lg" style="cursor:default"><span class="sw share-swatch"></span>held only by the floor</span>`;
+  document.querySelector(".share-swatch").style.background =
+    `repeating-linear-gradient(45deg, ${tok("--ink-3")} 0 2px, transparent 2px 4px)`;
+  document.querySelector(".share-swatch").style.border = `1px solid ${tok("--ink-3")}`;
+
+  $("src-legend").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-src]");
+    if (!btn) return;
+    const s = btn.dataset.src;
+    muted.has(s) ? muted.delete(s) : muted.add(s);
+    btn.setAttribute("aria-pressed", String(!muted.has(s)));
+    renderField();
+  });
+
+  $("outcome-legend").innerHTML = Object.keys(OUTCOMES).map(o => {
+    const n = B.filter(b => b.out === o).length;
+    if (!n) return "";
+    return `<span class="lg" style="cursor:default"><span class="sw" style="background:${outcomeInk(o)}"></span>`
+         + `${OUTCOMES[o].label} · ${n} (${(n * 100 / B.length).toFixed(0)}%)</span>`;
+  }).join("");
+
+  // ── Timeline ───────────────────────────────────────────────────────────
+  const strip = $("strip"), sctx = strip.getContext("2d");
+  strip.setAttribute("aria-valuemax", String(B.length - 1));
+  let geom = { x0: 0, w: 1 };
+
+  function drawStrip() {
+    const dpr = window.devicePixelRatio || 1;
+    const W = strip.clientWidth, H = strip.clientHeight;
+    strip.width = W * dpr; strip.height = H * dpr;
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.clearRect(0, 0, W, H);
+
+    const padT = 8, padB = 26, plotH = H - padT - padB;
+    const step = W / B.length, bw = Math.max(1, Math.min(9, step - 1));
+    geom = { x0: 0, w: step };
+
+    // Needs traces sit behind the bars, on one 0–1 axis (all three are ratios,
+    // so there is no second scale and no dual axis).
+    const traces = [
+      { key: b => b.hunger / 100,           color: tok("--src-Base") },
+      { key: b => b.mood / 100,             color: tok("--src-Situation") },
+      { key: b => b.hp / Math.max(1, b.hpMax), color: tok("--src-Behaviors") },
+    ];
+    sctx.save();
+    sctx.globalAlpha = .34; sctx.lineWidth = 1.5; sctx.lineJoin = "round";
+    for (const tr of traces) {
+      sctx.beginPath(); sctx.strokeStyle = tr.color;
+      B.forEach((b, i) => {
+        const x = i * step + step / 2, y = padT + plotH * (1 - Math.max(0, Math.min(1, tr.key(b))));
+        i ? sctx.lineTo(x, y) : sctx.moveTo(x, y);
+      });
+      sctx.stroke();
+    }
+    sctx.restore();
+
+    // Bars: height is the weight of whatever won the beat.
+    const maxW = Math.max(1, ...B.map(b => Math.abs(b.wWeight)));
+    B.forEach((b, i) => {
+      const h = Math.max(2, plotH * Math.abs(b.wWeight) / maxW);
+      const x = i * step + (step - bw) / 2, y = padT + plotH - h;
+      sctx.fillStyle = outcomeInk(b.out);
+      sctx.globalAlpha = i === cursor ? 1 : .72;
+      sctx.fillRect(x, y, bw, h);
+    });
+    sctx.globalAlpha = 1;
+
+    // Baseline + cursor.
+    sctx.strokeStyle = tok("--rule"); sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.moveTo(0, padT + plotH + .5); sctx.lineTo(W, padT + plotH + .5); sctx.stroke();
+
+    const cx = cursor * step + step / 2;
+    sctx.strokeStyle = tok("--accent-mark"); sctx.lineWidth = 1.5;
+    sctx.beginPath(); sctx.moveTo(cx, padT - 4); sctx.lineTo(cx, padT + plotH + 4); sctx.stroke();
+    sctx.fillStyle = tok("--accent-mark");
+    sctx.beginPath(); sctx.moveTo(cx, padT + plotH + 9); sctx.lineTo(cx - 4, padT + plotH + 3);
+    sctx.lineTo(cx + 4, padT + plotH + 3); sctx.closePath(); sctx.fill();
+
+    // Tick labels, thinned to whatever fits.
+    sctx.fillStyle = tok("--ink-3");
+    sctx.font = '10px "IBM Plex Mono", monospace';
+    const every = Math.max(1, Math.ceil(B.length / (W / 62)));
+    B.forEach((b, i) => {
+      if (i % every) return;
+      sctx.fillText("t" + b.t, Math.min(W - 26, i * step), H - 10);
+    });
+  }
+
+  const pick = e => {
+    const r = strip.getBoundingClientRect();
+    const i = Math.floor((e.clientX - r.left) / (r.width / B.length));
+    go(Math.max(0, Math.min(B.length - 1, i)));
+  };
+  strip.addEventListener("pointerdown", e => { strip.setPointerCapture(e.pointerId); pick(e); });
+  strip.addEventListener("pointermove", e => { if (e.buttons) pick(e); });
+  strip.addEventListener("keydown", e => {
+    const d = { ArrowLeft: -1, ArrowRight: 1, PageDown: -10, PageUp: 10, Home: -1e9, End: 1e9 }[e.key];
+    if (d === undefined) return;
+    e.preventDefault();
+    go(Math.max(0, Math.min(B.length - 1, cursor + d)));
+  });
+  window.addEventListener("keydown", e => {
+    if (e.target === strip || /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (e.key === "ArrowLeft") { e.preventDefault(); go(cursor - 1); }
+    if (e.key === "ArrowRight") { e.preventDefault(); go(cursor + 1); }
+  });
+  window.addEventListener("resize", () => { drawStrip(); drawReach(); });
+
+  // ── Tooltip ────────────────────────────────────────────────────────────
+  const tip = $("tip");
+  function showTip(e, html) {
+    tip.innerHTML = html; tip.classList.add("on");
+    const r = tip.getBoundingClientRect();
+    tip.style.left = Math.min(window.innerWidth - r.width - 10, e.clientX + 14) + "px";
+    tip.style.top = Math.max(8, e.clientY - r.height - 12) + "px";
+  }
+  const hideTip = () => tip.classList.remove("on");
+  document.addEventListener("scroll", hideTip, true);
+
+  // ── The field ──────────────────────────────────────────────────────────
+  function renderField() {
+    const b = B[cursor];
+    const live = c => c.w.filter(x => !muted.has(x.s));
+
+    // One scale for the whole beat, so rows are comparable to each other and
+    // not just to themselves.
+    let maxPos = 1, maxNeg = 1;
+    for (const c of b.c) {
+      let p = 0, n = 0;
+      for (const x of live(c)) x.v >= 0 ? p += x.v : n -= x.v;
+      maxPos = Math.max(maxPos, p); maxNeg = Math.max(maxNeg, n);
+    }
+    const span = maxPos + maxNeg, zeroPct = maxNeg / span * 100;
+
+    const order = [...b.c].sort((x, y) => y.tot - x.tot || x.a.localeCompare(y.a));
+    const maxShare = Math.max(...b.c.map(c => c.share), 0.01);
+
+    $("rows").innerHTML = order.map(c => {
+      const ws = live(c);
+      const pos = ws.filter(x => x.v > 0).sort((a, z) => z.v - a.v);
+      const neg = ws.filter(x => x.v < 0).sort((a, z) => a.v - z.v);
+
+      let segs = "", run = 0;
+      pos.forEach((x, i) => {
+        const w = x.v / span * 100;
+        segs += `<span class="seg${i === pos.length - 1 ? " cap-r" : ""}" `
+              + `style="left:calc(${zeroPct + run}% + 1px);width:calc(${w}% - 2px);background:${srcColor(x.s)}" `
+              + `data-src="${x.s}" data-v="${x.v}" data-a="${esc(c.a)}"></span>`;
+        run += w;
+      });
+      run = 0;
+      neg.forEach((x, i) => {
+        const w = -x.v / span * 100;
+        run += w;
+        segs += `<span class="seg${i === neg.length - 1 ? " cap-l" : ""}" `
+              + `style="left:calc(${zeroPct - run}% + 1px);width:calc(${w}% - 2px);background:${srcColor(x.s)}" `
+              + `data-src="${x.s}" data-v="${x.v}" data-a="${esc(c.a)}"></span>`;
+      });
+
+      const kw = c.kw.map(k => `<span class="chip">${esc(k)}</span>`).join("");
+      const shareW = c.share / maxShare * 100;
+
+      return `<div class="row${c.won ? " won" : ""}" data-i="1">
+        <div class="label">
+          <div class="verb">${esc(c.a)}${c.self ? "" : ` <span class="arrow">→</span> ${esc(c.tg)}`}</div>
+          <div class="sub">${c.self ? "on itself" : (c.gap > 0 ? c.gap.toFixed(1) + "m past reach" : "within reach")}
+            · ${c.kw.length} keywords</div>
+        </div>
+        <div class="bars">
+          <div class="stack"><span class="zero" style="left:${zeroPct}%"></span>${segs}</div>
+          <div class="share"><i class="${c.floored ? "floored" : ""}" style="width:${shareW.toFixed(2)}%"></i></div>
+        </div>
+        <div class="tot num${c.tot <= 0 ? " neg" : ""}">${c.tot}</div>
+        <div class="pct num">${c.share.toFixed(1)}%${c.floored ? ' <span class="floormark">▚</span>' : ""}</div>
+      </div>`;
+    }).join("");
+
+    const flooredN = b.c.filter(c => c.floored).length;
+    $("field-title").textContent = `The field — ${b.c.length} options at tick ${b.t}`;
+    $("field-note").innerHTML = `sorted by weight · <span class="num">${b.pool}</span> tickets in the roll`;
+
+    const winner = b.c.find(c => c.won);
+    $("field-read").innerHTML = b.inField && winner
+      ? `<b>${esc(winner.a)}</b> won the roll holding <b>${winner.share.toFixed(1)}%</b> of the tickets`
+        + `${winner.share < 20 ? " — which is to say the roll, not the reasoning, decided this beat" : ""}.`
+        + ` ${flooredN} of ${b.c.length} options scored at zero or below and still held`
+        + ` <b>${(b.floorMass * 100 / b.pool).toFixed(1)}%</b> of the probability between them,`
+        + ` because the selector floors every candidate at one ticket.`
+      : `No option in this field was chosen — the beat went to the activity already running,`
+        + ` which is defended by comparison rather than entered in the roll. The field is what it`
+        + ` was measured <em>against</em>.`;
+  }
+
+  $("rows").addEventListener("mouseover", e => {
+    const s = e.target.closest(".seg"); if (!s) return;
+    showTip(e, `<b>${esc(s.dataset.src)}</b> on ${esc(s.dataset.a)}<br>`
+             + `<span class="r">${sign(+s.dataset.v)}</span> weight`);
+  });
+  $("rows").addEventListener("mousemove", e => {
+    const s = e.target.closest(".seg");
+    if (s && tip.classList.contains("on")) {
+      const r = tip.getBoundingClientRect();
+      tip.style.left = Math.min(window.innerWidth - r.width - 10, e.clientX + 14) + "px";
+      tip.style.top = Math.max(8, e.clientY - r.height - 12) + "px";
+    }
+  });
+  $("rows").addEventListener("mouseout", e => { if (e.target.closest(".seg")) hideTip(); });
+
+  // ── Verdict ────────────────────────────────────────────────────────────
+  function renderVerdict() {
+    const b = B[cursor], o = OUTCOMES[b.out] || { label: b.out, blurb: "" };
+
+    $("v-tick").innerHTML = `tick <span class="num">${b.t}</span> · beat ${cursor + 1}/${B.length}`;
+    $("v-what").innerHTML = esc(b.wAction)
+      + (b.wTarget && b.wTarget !== D.focus.name ? ` <span class="arrow">→</span> ${esc(b.wTarget)}` : "");
+    const pill = $("v-outcome");
+    pill.className = "outcome " + b.out.toLowerCase();
+    pill.lastElementChild.textContent = o.label;
+
+    const g = [];
+    const push = (state, what, val) => g.push(
+      `<div class="gate ${state}"><span class="mk">${state === "pass" ? "✓" : state === "stop" ? "✕" : "·"}</span>`
+      + `<span class="g-what">${what}</span><span class="g-val">${val}</span></div>`);
+
+    push("pass", "Held the most tickets?",
+      b.inField ? (b.c.every(c => c.won || c.share <= (b.c.find(x => x.won)?.share ?? 0)) ? "yes" : "no — outrolled") : "n/a");
+    if (b.com) {
+      push(b.com.held ? "stop" : "pass",
+        b.com.held ? "Beaten by what it was doing" : "Beat what it was doing",
+        `${b.com.total} vs ${b.wWeight}`);
+    } else if (b.busy) {
+      push("moot", "Already doing this — no contest", "agreed");
+    } else {
+      push("moot", "Nothing to interrupt", "idle");
+    }
+    push(b.out === "Approached" ? "stop" : "pass", "Target within reach?",
+      b.out === "Approached" ? "no — walked instead" : "yes");
+    push(b.out === "NoItem" ? "stop" : "pass", "Had an item for it?",
+      b.out === "NoItem" ? "no — beat lost" : (b.item ? esc(b.item) : "not needed"));
+    if (b.inf) {
+      push("pass", `Whisper &ldquo;${esc(b.inf.label || b.inf.kw.join(" "))}&rdquo; pending`,
+        `+${b.inf.strength}`);
+    }
+    push("moot", "Focus this beat", (b.focus * 100).toFixed(0) + "%");
+    push("moot", "Standing in", esc(b.where));
+    $("v-gates").innerHTML = g.join("");
+
+    // Commitment
+    const cp = $("commit-panel");
+    if (b.com) {
+      cp.hidden = false;
+      const stay = b.com.total, go_ = b.wWeight;
+      const tot = Math.max(1, Math.abs(stay) + Math.abs(go_));
+      const stayPct = Math.max(0, stay) / tot * 100, goPct = Math.max(0, go_) / tot * 100;
+      $("commit-body").innerHTML =
+        `<div class="commit-bar">
+           <span class="half stay" style="width:${stayPct}%"></span>
+           <span class="half go" style="width:${goPct}%"></span>
+           <span class="lab num">stay ${stay}</span>
+           <span class="lab r num" style="color:${tok('--ink')}">${go_} go</span>
+         </div>
+         <div class="read" style="margin:0 0 8px;border-left-color:${b.com.held ? tok("--src-Commitment") : tok("--accent-mark")}">
+           ${b.com.held
+             ? `Staying was worth <b>${stay}</b> and the best thing on offer only <b>${go_}</b>, so it stayed. `
+               + `Nothing was rolled — this is a threshold, and thresholds do not compound over a long action the way per-beat rolls do.`
+             : `The field offered <b>${go_}</b> against <b>${stay}</b> for staying, so it walked out `
+               + `— and settled the run on the way past, paid for whatever it had managed.`}
+         </div>
+         <div class="terms">` +
+        b.com.terms.map(t =>
+          `<div class="term"><span class="w ${t.v >= 0 ? "plus" : "minus"}">${sign(t.v)}</span>`
+          + `<span>${esc(t.s)}</span></div>`).join("")
+        + `</div>`;
+    } else cp.hidden = true;
+
+    // Per-source ledger for this beat.
+    const sums = {};
+    for (const c of b.c) for (const w of c.w) sums[w.s] = (sums[w.s] || 0) + w.v;
+    const peak = Math.max(1, ...Object.values(sums).map(Math.abs));
+    $("v-ledger").innerHTML = SOURCES.map(s => {
+      const v = sums[s] || 0;
+      const w = Math.abs(v) / peak * 100;
+      return `<div class="led${v === 0 ? " silent" : ""}">
+        <span class="nm"><span class="sw" style="background:${srcColor(s)}"></span>${esc(s)}</span>
+        <span class="spark"><span style="display:block;height:9px;margin-top:2px;border-radius:1px;
+          width:${w.toFixed(1)}%;background:${v < 0 ? tok("--ink-3") : srcColor(s)}"></span></span>
+        <span class="n${v === 0 ? " zero" : ""}">${v === 0 ? "—" : sign(v)}</span>
+      </div>`;
+    }).join("");
+  }
+
+  // ── Reach ──────────────────────────────────────────────────────────────
+  const rc = $("reach"), rctx = rc.getContext("2d");
+  function drawReach() {
+    const b = B[cursor];
+    const dpr = window.devicePixelRatio || 1;
+    const W = rc.clientWidth, H = rc.clientHeight;
+    rc.width = W * dpr; rc.height = H * dpr;
+    rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    rctx.clearRect(0, 0, W, H);
+
+    const seen = new Map();
+    for (const c of b.c) if (!c.self && !seen.has(c.tg)) seen.set(c.tg, c.gap);
+    const targets = [...seen.entries()];
+    const maxGap = Math.max(1, ...targets.map(t => t[1]));
+    const L = 8, R = W - 8, y = 20;
+
+    rctx.strokeStyle = tok("--rule"); rctx.lineWidth = 1;
+    rctx.beginPath(); rctx.moveTo(L, y + .5); rctx.lineTo(R, y + .5); rctx.stroke();
+
+    rctx.fillStyle = tok("--ink-3");
+    rctx.font = '9px "IBM Plex Mono", monospace';
+    rctx.fillText("reach", L, y - 9);
+    rctx.textAlign = "right"; rctx.fillText(maxGap.toFixed(0) + "m", R, y - 9);
+    rctx.textAlign = "left";
+
+    const winner = b.c.find(c => c.won);
+    for (const [name, gap] of targets) {
+      const x = L + (R - L) * (gap / maxGap);
+      const isWin = winner && winner.tg === name && !winner.self;
+      rctx.fillStyle = isWin ? tok("--accent-mark") : tok("--ink-3");
+      rctx.beginPath(); rctx.arc(x, y, isWin ? 5 : 3.5, 0, Math.PI * 2); rctx.fill();
+      if (isWin) {
+        rctx.fillStyle = tok("--ink");
+        rctx.font = '10px "IBM Plex Mono", monospace';
+        const w = rctx.measureText(name).width;
+        rctx.fillText(name, Math.max(L, Math.min(R - w, x - w / 2)), y + 18);
+      }
+    }
+    rctx.fillStyle = tok("--ink-3");
+    rctx.font = '9px "IBM Plex Mono", monospace';
+    rctx.fillText(targets.length + " reachable targets in this field", L, H - 3);
+  }
+
+  // ── Standing equipment ─────────────────────────────────────────────────
+  const chosenCount = {};
+  for (const b of B) chosenCount[b.wAction] = (chosenCount[b.wAction] || 0) + 1;
+
+  function renderKit() {
+    const b = B[cursor];
+    const winner = b.c.find(c => c.won);
+    const hot = new Set(winner ? winner.kw : []);
+    $("verbs").innerHTML = D.focus.verbs.map(v => `<tr>
+      <td class="nm">${esc(v.name)}${v.dur > 1 ? ` <span class="chip">${v.dur} beats</span>` : ""}</td>
+      <td><div class="chips">${v.kw.map(k =>
+        `<span class="chip${hot.has(k) ? " hit" : ""}">${esc(k)}</span>`).join("")}</div></td>
+      <td class="r num">${chosenCount[v.name] || "—"}</td>
+      <td class="r num">${v.base || "—"}</td></tr>`).join("");
+
+    $("behaviors").innerHTML = D.focus.behaviors.map(x => `<tr>
+      <td class="nm">${esc(x.name)}</td>
+      <td><div class="chips">${x.kw.map(k =>
+        `<span class="chip${hot.has(k) ? " hit" : ""}">${esc(k)}</span>`).join("")}</div></td>
+      <td class="r num">${sign(x.affect * x.scalar)}<span style="color:var(--ink-3)">/kw</span></td></tr>`).join("");
+  }
+
+  // Run-wide: which lanes of judgement actually carry anything.
+  (() => {
+    const agg = {};
+    let cands = 0;
+    for (const b of B) {
+      cands += b.c.length;
+      for (const c of b.c) for (const w of c.w) {
+        (agg[w.s] ||= { abs: 0, n: 0 }).abs += Math.abs(w.v);
+        agg[w.s].n++;
+      }
+    }
+    const peak = Math.max(1, ...Object.values(agg).map(a => a.abs));
+    $("seams").innerHTML = SOURCES.map(s => {
+      const a = agg[s] || { abs: 0, n: 0 };
+      return `<div class="led${a.n === 0 ? " silent" : ""}">
+        <span class="nm"><span class="sw" style="background:${srcColor(s)}"></span>${esc(s)}</span>
+        <span class="spark"><span style="display:block;height:9px;margin-top:2px;border-radius:1px;
+          width:${(a.abs / peak * 100).toFixed(1)}%;background:${srcColor(s)}"></span></span>
+        <span class="n${a.n === 0 ? " zero" : ""}">${a.n === 0 ? "silent" : (a.n * 100 / cands).toFixed(0) + "%"}</span>
+      </div>`;
+    }).join("");
+
+    const silent = SOURCES.filter(s => !agg[s]);
+    const busiest = SOURCES.filter(s => agg[s]).sort((x, y) => agg[y].abs - agg[x].abs)[0];
+    $("seam-read").innerHTML =
+      `The right column is how often a lane spoke at all — the share of candidates it put any weight on.`
+      + ` <b>${esc(busiest)}</b> carries the most force across this run.`
+      + (silent.length
+          ? ` <b>${silent.map(esc).join(" and ")}</b> never fired once: ${silent.length > 1 ? "those are" : "that is a"}`
+            + ` lane${silent.length > 1 ? "s" : ""} of judgement this entity has and never uses.`
+          : ` Every lane fired at least once.`)
+      + ` A new consideration — a schedule, a grudge that remembers, an appetite for a place — enters here as`
+      + ` another source on this list, not as a special case inside an existing one.`;
+  })();
+
+  // ── Drive ──────────────────────────────────────────────────────────────
+  function go(i) {
+    cursor = Math.max(0, Math.min(B.length - 1, i));
+    strip.setAttribute("aria-valuenow", String(cursor));
+    strip.setAttribute("aria-valuetext", `tick ${B[cursor].t}, ${B[cursor].wAction}`);
+    drawStrip(); renderField(); renderVerdict(); drawReach(); renderKit();
+    const b = B[cursor];
+    $("scrub-help").innerHTML =
+      `Beat ${cursor + 1} of ${B.length} · hunger <span class="num">${b.hunger}</span>`
+      + ` · mood <span class="num">${b.mood}</span>`
+      + ` · hp <span class="num">${b.hp}</span>/<span class="num">${b.hpMax}</span>`
+      + (b.busy ? ` · mid-<b>${esc(b.busy.a)}</b>, beat ${b.busy.elapsed}/${b.busy.dur}` : "");
+  }
+
+  // Open on the most contested beat in the run — the one where the winner held
+  // the least of the probability. That is where the machine is least sure of
+  // itself, which is the beat worth looking at first.
+  let opening = 0, thinnest = 2;
+  B.forEach((b, i) => {
+    const wc = b.c.find(c => c.won);
+    if (wc && wc.share / 100 < thinnest) { thinnest = wc.share / 100; opening = i; }
+  });
+  go(opening);
+})();
+</script>

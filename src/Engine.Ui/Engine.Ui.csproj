@@ -4,6 +4,18 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!--
+      Windows Smart App Control blocked the 1.0.0 build of this assembly by
+      hash (0x800711C7 "An Application Control policy has blocked this file")
+      - an Intelligent Security Graph false positive; every sibling assembly
+      built alongside it loads fine. Because SDK builds are deterministic, a
+      rebuild reproduced the blocked bytes exactly, so the block was permanent
+      and looked like a code fault. Bumping the version changes the output
+      hash, which SAC then re-evaluates and allows. Keep this bumped; if SAC
+      ever blocks Engine.Ui again, bump it again rather than disabling
+      determinism.
+    -->
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
